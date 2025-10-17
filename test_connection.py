@@ -1,5 +1,5 @@
 # test_connection.py
-from conexion import get_cursor
+from src.conexion import get_cursor
 
 def main():
     with get_cursor() as cur:
