@@ -1,14 +1,15 @@
 from .conexion import get_cursor
 
-def crear_producto(nombre: str, unidad_id: int, stock_inicial: float = 0, es_producido: bool = False, es_vendido: bool = True):
+def crear_producto(nombre: str, unidad_id: int, id_familia: int,  stock_inicial: float = 0, codigo_softrestaurante: int = None, es_producido: bool = False, es_vendido: bool = True, activo: bool = True):
     with get_cursor(commit=True) as cur:
         cur.execute(
             """
-            INSERT INTO productos (nombre, unidad, stock, es_producido, es_vendido)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO productos (nombre, unidad, stock, codigo_softrestaurant, es_producido, es_vendido, activo, id_familia
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id_producto;
             """,
-            (nombre, unidad_id, stock_inicial, es_producido, es_vendido)
+            (nombre, unidad_id, stock_inicial, codigo_softrestaurante, es_producido, es_vendido, activo, id_familia)
         )
         id_creado = cur.fetchone()
         return id_creado
