@@ -20,3 +20,7 @@ CREATE INDEX idx_movimientos_fecha ON movimientos_inventario(fecha);
 CREATE INDEX idx_inventario_fecha ON inventario_historico(fecha);
 
 INSERT INTO unidades_medida (nombre, factor_base) VALUES ('Gramo (g)', 1),('Kilogramo (kg)', 1000),('Libra (lb)', 453.592),('Onza (oz)', 28.3495),('Mililitro (ml)', 1),('Litro (L)', 1000),('Galón (gal)', 3785.41),('Onza líquida (oz fl)', 29.5735),('Frasco (200 ml)', 200),('Unidad (pz)', 1),('Docena (12 pz)', 12),('Ciento (100 pz)', 100),('Porción', 1),('Ración (2 porciones)', 2),('Bolsa (350 g)', 350),('Bolsa (120 g)', 120);
+
+CREATE TABLE familias (id_familia SERIAL PRIMARY KEY, nombre VARCHAR(100) NOT NULL UNIQUE, descripcion TEXT); 
+INSERT INTO familias (nombre) VALUES ('BREAKFAST'), ('CARNES/PROT'), ('CREMAS PROTEICAS'), ('CUCHAREABLES'), ('DESAYUNOS'), ('EXTRAS'), ('HELADOS'), ('MERCANCIAS'), ('MODIFICADORES'), ('PAQUETES'), ('PASTELES'), ('PETSNACKS'), ('POSTRES'), ('PROMOCIONES'), ('RAPPI'), ('RAPPIPROMO'), ('SALADOS'), ('SHAKES&LICUADOS'), ('XPIRADOS');
+ALTER TABLE productos ADD COLUMN id_familia INT REFERENCES familias(id_familia); UPDATE productos p SET id_familia = f.id_familia FROM familias f WHERE p.familia = f.nombre; ALTER TABLE productos DROP COLUMN familia;
