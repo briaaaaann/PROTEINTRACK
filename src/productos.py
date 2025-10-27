@@ -41,3 +41,25 @@ def desactivar_producto(id_producto: int):
     with get_cursor(commit=True) as cur:
         cur.execute("UPDATE productos SET activo = FALSE WHERE id_producto = %s;", (id_producto,))
         return cur.rowcount > 0
+
+def obtener_producto_por_nombre_y_familia(nombre_producto: str, nombre_familia: str):
+    """
+    Busca un ID de producto usando su nombre y el nombre de su familia.
+    Esto es clave para conectar el Excel con la base de datos.
+    """
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT p.id_producto
+            FROM productos p
+            JOIN familias f ON p.id_familia = f.id_familia
+            WHERE p.nombre = %s AND f.nombre = %s
+            AND p.activo = TRUE;
+            """,
+            (nombre_producto, nombre_familia)
+        )
+        producto = cur.fetchone()
+        
+        if producto:
+            return producto['id_producto']
+        return None
