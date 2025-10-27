@@ -7,12 +7,7 @@ from . import ventas
 from . import movimientos_inventario
 
 def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: float, descuento: float = 0):
-    """
-    Orquesta el registro de una venta.
-    Ahora es inteligente: si el producto es 'producido',
-    ejecuta la lógica de producción para descontar insumos.
-    Si no, solo descuenta el stock del producto.
-    """
+
     try:
         cantidad_decimal = Decimal(str(cantidad))
         precio_decimal = Decimal(str(precio_unitario))
@@ -148,4 +143,18 @@ def registrar_produccion_de_platillo(id_producto_final: int, cantidad_producida:
     except Exception as e:
         print(f"❌ Error crítico en registrar_produccion_de_platillo: {e}")
         print("ℹ️ Es posible que el inventario esté en un estado inconsistente. Se requiere revisión manual.")
+        return False
+
+def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, observaciones: str = "Producción interna"):
+    try:
+        cantidad_decimal = Decimal(str(cantidad))
+        if not productos.actualizar_stock(id_producto, cantidad_decimal):
+            raise Exception("No se pudo actualizar el stock del producto.")
+        produccion.registrar_produccion(id_producto, cantidad_decimal, unidad_id, observaciones)
+        
+        print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_decimal}.")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error en registrar_produccion_simple: {e}")
         return False
