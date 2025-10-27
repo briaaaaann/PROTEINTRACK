@@ -59,17 +59,30 @@ def cargar_ventas_excel_ui():
         
     except Exception as e:
         print(f"❌ Ocurrió un error inesperado en la interfaz: {e}")
-def registrar_produccion_ui():
-    print("\n--- 🍳 Registrar Producción de Platillo ---")
+
+
+def registrar_produccion_simple_ui():
+    """Interfaz para registrar una PRODUCCIÓN SIMPLE (Suma a Stock, sin receta)."""
+    print("\n--- 🍳 Registrar Producción Simple (Ej: Helados, Cremas) ---")
     try:
-        if not _mostrar_productos_disponibles(): return
-        id_prod = int(input("ID del platillo (producto final) a producir: "))
-        cantidad = float(input("Cantidad a producir: "))
-        if not _mostrar_unidades(): return
-        unidad_id = int(input("ID de la unidad de medida (para el platillo): "))
-        logica_negocio.registrar_produccion_de_platillo(id_prod, cantidad, unidad_id)
+        if not _mostrar_productos_disponibles(): 
+            return
+            
+        id_prod = int(input("ID del producto que se produjo (ej. Helado de Chocolate): "))
+        cantidad = float(input("Cantidad producida: "))
+        
+        if not _mostrar_unidades(): 
+            return
+        unidad_id = int(input("ID de la unidad de medida: "))
+        
+        obs = input("Observaciones (opcional): ") or "Producción interna"
+        logica_negocio.registrar_produccion_simple(id_prod, cantidad, unidad_id, obs)
+
     except (ValueError, TypeError):
         print("❌ Error de entrada: Ingrese un valor numérico válido.")
+    except Exception as e:
+        print(f"❌ Ocurrió un error inesperado: {e}")
+
 
 def registrar_compra_ui():
     print("\n--- 🚚 Registrar Compra (Entrada de Insumo) ---")
@@ -191,7 +204,7 @@ def main():
         if opcion == '1':
             cargar_ventas_excel_ui()
         elif opcion == '2':
-            registrar_produccion_ui()
+            registrar_produccion_simple_ui()
         elif opcion == '3':
             registrar_compra_ui()
         elif opcion == '4':
