@@ -25,3 +25,12 @@ def eliminar_unidad(id_unidad: int):
     with get_cursor(commit=True) as cur:
         cur.execute("DELETE FROM unidades_medida WHERE id = %s;", (id_unidad,))
         return cur.rowcount > 0
+    
+def obtener_factor_base(id_unidad: int):
+    with get_cursor() as cur:
+        cur.execute("SELECT factor_base FROM unidades_medida WHERE id = %s;", (id_unidad,))
+        resultado = cur.fetchone()
+        if resultado:
+            # El factor se guarda como NUMERIC, lo convertimos a Decimal
+            return resultado['factor_base']
+        return None

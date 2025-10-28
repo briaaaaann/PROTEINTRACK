@@ -5,6 +5,7 @@ from . import recetas
 from . import produccion
 from . import ventas
 from . import movimientos_inventario
+from . import unidades_medida
 
 def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: float, descuento: float = 0):
 
@@ -84,30 +85,45 @@ def procesar_ventas_excel(ruta_archivo: str):
         print(f"❌ ERROR crítico al leer el archivo Excel: {e}")
 
 
-def registrar_compra_logica(id_producto: int, cantidad: float):
+def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
     try:
+        factor = unidades_medida.obtener_factor_base(unidad_id)
+        if factor is None:
+            raise Exception(f"Unidad ID {unidad_id} no encontrada.")
         cantidad_decimal = Decimal(str(cantidad))
-        if not productos.actualizar_stock(id_producto, cantidad_decimal):
+        factor_decimal = Decimal(factor) # El factor ya es Decimal
+        cantidad_base = cantidad_decimal * factor_decimal
+        if not productos.actualizar_stock(id_producto, cantidad_base):
             raise Exception("No se pudo actualizar el stock.")
-        print(f"✅ Stock actualizado para el producto {id_producto}. Nuevo total sumado: {cantidad_decimal}")
+        
+        print(f"✅ Stock actualizado para el producto {id_producto}. Sumado: {cantidad_base} unidades base")
         return True
+        
     except Exception as e:
         print(f"❌ Error en registrar_compra_logica: {e}")
         return False
 
 def registrar_merma_logica(id_producto: int, cantidad: float, unidad_id: int, observaciones: str):
     try:
+        factor = unidades_medida.obtener_factor_base(unidad_id)
+        if factor is None:
+            raise Exception(f"Unidad ID {unidad_id} no encontrada.")
         cantidad_decimal = Decimal(str(cantidad))
+        factor_decimal = Decimal(factor)
+        cantidad_base = cantidad_decimal * factor_decimal
         nuevo_mov = movimientos_inventario.registrar_movimiento(
             id_producto, 'Merma', cantidad_decimal, unidad_id, observaciones
         )
         if not nuevo_mov:
             raise Exception("No se pudo registrar el movimiento de merma.")
+            
         print(f"✅ Movimiento de merma registrado ID: {nuevo_mov['id_movimiento']}")
-        if not productos.actualizar_stock(id_producto, -cantidad_decimal):
+        if not productos.actualizar_stock(id_producto, -cantidad_base): # <--- ¡EL CAMBIO CLAVE!
             raise Exception("No se pudo actualizar el stock por la merma.")
-        print("✅ Stock del producto actualizado.")
+            
+        print(f"✅ Stock del producto actualizado. (Descontado: {cantidad_base} unidades base)")
         return True
+
     except Exception as e:
         print(f"❌ Error en registrar_merma_logica: {e}")
         return False
@@ -147,12 +163,16 @@ def registrar_produccion_de_platillo(id_producto_final: int, cantidad_producida:
 
 def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, observaciones: str = "Producción interna"):
     try:
+        factor = unidades_medida.obtener_factor_base(unidad_id)
+        if factor is None:
+            raise Exception(f"Unidad ID {unidad_id} no encontrada.")
         cantidad_decimal = Decimal(str(cantidad))
-        if not productos.actualizar_stock(id_producto, cantidad_decimal):
+        factor_decimal = Decimal(factor)
+        cantidad_base = cantidad_decimal * factor_decimal 
+        if not productos.actualizar_stock(id_producto, cantidad_base):
             raise Exception("No se pudo actualizar el stock del producto.")
         produccion.registrar_produccion(id_producto, cantidad_decimal, unidad_id, observaciones)
-        
-        print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_decimal}.")
+        print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_base} unidades base (equivale a {cantidad_decimal} L).")
         return True
         
     except Exception as e:

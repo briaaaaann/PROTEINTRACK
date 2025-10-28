@@ -5,13 +5,15 @@ from . import productos
 from . import unidades_medida
 from . import recetas
 from . import familias
+from decimal import Decimal
 
 def _mostrar_productos_disponibles(con_stock: bool = False):
     print("\n--- 📦 Productos Disponibles ---")
     lista = productos.obtener_todos_los_productos(solo_activos=True)
     if not lista: print("ℹ️ No hay productos registrados."); return False
+    
     if con_stock:
-        pprint([f"ID: {p['id_producto']} | {p['nombre']} (Stock: {p['stock']})" for p in lista])
+        pprint([f"ID: {p['id_producto']} | {p['nombre']} (Stock: {p['stock_convertido']:.3f} {p['unidad_nombre']})" for p in lista])
     else:
         pprint([f"ID: {p['id_producto']} | {p['nombre']}" for p in lista])
     return True
@@ -89,8 +91,12 @@ def registrar_compra_ui():
     try:
         if not _mostrar_productos_disponibles(con_stock=True): return
         id_prod = int(input("ID del producto/insumo comprado: "))
-        cantidad = float(input("Cantidad comprada (positiva): "))
-        logica_negocio.registrar_compra_logica(id_prod, cantidad)
+        cantidad = float(input("Cantidad comprada (ej. 10): "))
+        
+        if not _mostrar_unidades(): return
+        unidad_id = int(input("ID de la unidad de medida de la compra (ej. 'Kilogramo'): "))
+        logica_negocio.registrar_compra_logica(id_prod, cantidad, unidad_id)
+        
     except (ValueError, TypeError):
         print("❌ Error de entrada: Ingrese un valor numérico válido.")
 
@@ -119,24 +125,29 @@ def gestionar_productos_ui():
             if opcion == '1':
                 nombre = input("Nombre del producto: ")
                 if not _mostrar_unidades(): continue
-                unidad_id = int(input("ID de la unidad de medida: "))
+                unidad_id = int(input("ID de la unidad de medida *principal* (ej. Litro): "))             
                 if not _mostrar_familias(): continue
-                id_familia = int(input("ID de la familia del producto: "))
-                stock = float(input("Stock inicial: "))
+                id_familia = int(input("ID de la familia del producto: "))  
+                stock_inicial_input = float(input(f"Stock inicial (en la unidad principal, ej. 'Litros'): "))
+                factor = unidades_medida.obtener_factor_base(unidad_id) 
+                if factor is None:
+                    print("❌ Unidad no válida. No se pudo crear el producto."); continue
+                stock_base = Decimal(str(stock_inicial_input)) * Decimal(factor)
                 codigo_sr = input("Código SoftRestaurant (opcional, presiona Enter para omitir): ")
                 codigo_softrestaurante = int(codigo_sr) if codigo_sr.isdigit() else None
                 es_prod = input("¿Es un platillo producido? (s/n): ").lower() == 's'
                 es_vend = input("¿Es un producto vendible? (s/n): ").lower() == 's'
+                
                 nuevo = productos.crear_producto(
                     nombre=nombre, 
                     unidad_id=unidad_id, 
                     id_familia=id_familia, 
-                    stock_inicial=stock, 
+                    stock_inicial=stock_base,  
                     codigo_softrestaurante=codigo_softrestaurante,
                     es_producido=es_prod, 
                     es_vendido=es_vend
                 )
-                print(f"✅ Producto creado con éxito. ID: {nuevo['id_producto']}")
+                print(f"✅ Producto creado con éxito. ID: {nuevo['id_producto']} (Stock base: {stock_base} g/ml)")
             elif opcion == '2':
                 _mostrar_productos_disponibles(con_stock=True)
             elif opcion == '3':
