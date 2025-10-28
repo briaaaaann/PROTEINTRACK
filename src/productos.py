@@ -21,10 +21,21 @@ def obtener_producto_por_id(id_producto: int):
 
 def obtener_todos_los_productos(solo_activos: bool = True):
     with get_cursor() as cur:
-        sql_query = "SELECT * FROM productos"
+        sql_query = """
+            SELECT 
+                p.id_producto, 
+                p.nombre, 
+                p.stock AS stock_base,  -- Stock en Gramos/Mililitros
+                um.nombre AS unidad_nombre,
+                um.factor_base,
+                -- Calculamos el stock en la unidad legible (Litros/Kilos)
+                (p.stock / um.factor_base) AS stock_convertido
+            FROM productos p
+            JOIN unidades_medida um ON p.unidad = um.id
+        """
         if solo_activos:
-            sql_query += " WHERE activo = TRUE"
-        sql_query += " ORDER BY nombre;"
+            sql_query += " WHERE p.activo = TRUE"
+        sql_query += " ORDER BY p.nombre;"
         
         cur.execute(sql_query)
         return cur.fetchall()
