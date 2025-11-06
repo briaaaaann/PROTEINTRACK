@@ -34,3 +34,19 @@ def eliminar_familia(id_familia: int):
     with get_cursor(commit=True) as cur:
         cur.execute("DELETE FROM familias WHERE id_familia = %s;", (id_familia,))
         return cur.rowcount > 0
+    
+def obtener_familia_por_nombre(nombre: str):
+
+    if not nombre:
+        return None
+    
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM familias 
+            WHERE UPPER(TRIM(nombre)) = UPPER(TRIM(%s))
+            LIMIT 1;
+            """,
+            (nombre,)
+        )
+        return cur.fetchone()

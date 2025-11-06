@@ -54,17 +54,18 @@ def desactivar_producto(id_producto: int):
         return cur.rowcount > 0
 
 def obtener_producto_por_nombre_y_familia(nombre_producto: str, nombre_familia: str):
-    """
-    Busca un ID de producto usando su nombre y el nombre de su familia.
-    Esto es clave para conectar el Excel con la base de datos.
-    """
+
     with get_cursor() as cur:
         cur.execute(
             """
             SELECT p.id_producto
             FROM productos p
             JOIN familias f ON p.id_familia = f.id_familia
-            WHERE p.nombre = %s AND f.nombre = %s
+            WHERE 
+                -- Clave: 1. UPPER, 2. REPLACE, 3. unaccent
+                unaccent(REPLACE(UPPER(p.nombre), 'Ñ', 'N')) = unaccent(REPLACE(UPPER(%s), 'Ñ', 'N'))
+                AND 
+                unaccent(REPLACE(UPPER(f.nombre), 'Ñ', 'N')) = unaccent(REPLACE(UPPER(%s), 'Ñ', 'N'))
             AND p.activo = TRUE;
             """,
             (nombre_producto, nombre_familia)
@@ -74,3 +75,41 @@ def obtener_producto_por_nombre_y_familia(nombre_producto: str, nombre_familia: 
         if producto:
             return producto['id_producto']
         return None
+    
+def obtener_producto_por_codigo_sr(codigo_sr: str):
+    """
+    Busca un ID de producto usando su 'codigo_softrestaurant'.
+    (Versión corregida que ignora filas con códigos no numéricos en la BD)
+    """
+    with get_cursor() as cur:
+        try:
+            # El 'codigo_sr' viene de logica_negocio.py como un string limpio (ej. '7036')
+            
+            cur.execute(
+                """
+                SELECT id_producto
+                FROM productos 
+                WHERE 
+                    -- --- INICIO DE LA CORRECCIÓN ---
+                    -- 1. Revisa que el código en la BD contenga SÓLO números.
+                    -- Esto ignora automáticamente valores '' o NULL o 'ABC'
+                    codigo_softrestaurant ~ '^[0-9]+$'
+                    
+                    -- 2. SOLO SI ES NUMÉRICO, intenta convertirlo y compararlo.
+                    AND CAST(codigo_softrestaurant AS INTEGER) = CAST(%s AS INTEGER)
+                    -- --- FIN DE LA CORRECCIÓN ---
+                AND activo = TRUE;
+                """,
+                (codigo_sr,) 
+            )
+            
+            producto = cur.fetchone()
+            
+            if producto:
+                return producto['id_producto']
+            return None
+        
+        except Exception as e:
+            # Si algo aun así falla, lo reportará.
+            print(f"⚠️ ADVERTENCIA: Error al buscar código {codigo_sr}. Detalle: {e}")
+            return None
