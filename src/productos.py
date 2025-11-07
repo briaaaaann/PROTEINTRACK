@@ -25,13 +25,26 @@ def obtener_todos_los_productos(solo_activos: bool = True):
             SELECT 
                 p.id_producto, 
                 p.nombre, 
-                p.stock AS stock_base,  -- Stock en Gramos/Mililitros
+                p.stock AS stock_base,
+                p.codigo_softrestaurant,
+                p.id_familia,
+                f.nombre AS familia_nombre,
+                p.unidad AS unidad_id,
                 um.nombre AS unidad_nombre,
-                um.factor_base,
-                -- Calculamos el stock en la unidad legible (Litros/Kilos)
-                (p.stock / um.factor_base) AS stock_convertido
+                p.activo,
+                p.es_producido, 
+                p.es_vendido,
+                
+                -- Conversion de stock
+                CASE 
+                    WHEN um.factor_base > 0 THEN p.stock / um.factor_base
+                    ELSE 0 
+                END AS stock_convertido
+                
             FROM productos p
+            JOIN familias f ON p.id_familia = f.id_familia
             JOIN unidades_medida um ON p.unidad = um.id
+            -- (Se eliminó el JOIN a 'um_base' que causaba el error)
         """
         if solo_activos:
             sql_query += " WHERE p.activo = TRUE"
@@ -77,14 +90,8 @@ def obtener_producto_por_nombre_y_familia(nombre_producto: str, nombre_familia: 
         return None
     
 def obtener_producto_por_codigo_sr(codigo_sr: str):
-    """
-    Busca un ID de producto usando su 'codigo_softrestaurant'.
-    (Versión corregida que ignora filas con códigos no numéricos en la BD)
-    """
     with get_cursor() as cur:
         try:
-            # El 'codigo_sr' viene de logica_negocio.py como un string limpio (ej. '7036')
-            
             cur.execute(
                 """
                 SELECT id_producto
@@ -110,6 +117,5 @@ def obtener_producto_por_codigo_sr(codigo_sr: str):
             return None
         
         except Exception as e:
-            # Si algo aun así falla, lo reportará.
             print(f"⚠️ ADVERTENCIA: Error al buscar código {codigo_sr}. Detalle: {e}")
             return None
