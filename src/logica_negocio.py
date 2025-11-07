@@ -45,16 +45,10 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         print(f"❌ Error en registrar_venta_logica: {e}")
         return False
     
-def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback): # <-- 1. AÑADIR NUEVO ARGUMENTO
-    """
-    Lee un archivo Excel y procesa cada fila como una venta.
-    Si no encuentra un producto, llama al callback interactivo para crearlo.
-    """
+def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback): 
     print(f"ℹ️ Iniciando carga de ventas desde: {ruta_archivo}")
     try:
         ruta_limpia = ruta_archivo.strip().strip('\'"')
-        
-        # Leemos la CLAVE como texto para evitar problemas con '.0'
         df = pd.read_excel(ruta_limpia, header=4, dtype={'CLAVE': str}) 
         df = df.dropna(subset=['CLAVE'])
         
@@ -62,11 +56,8 @@ def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback): # <-- 
         
         exitos = 0
         fallos = 0
-
-        # Iteramos sobre cada fila
         for index, row in df.iterrows():
             try:
-                # Limpiamos la clave (quitamos '.0' si existe)
                 clave_sr = str(row['CLAVE']).split('.')[0]
                 
                 nombre_prod_log = row['DESCRIPCION'] 
@@ -77,25 +68,20 @@ def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback): # <-- 
                 id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
                 
                 if id_prod: 
-                    # --- CASO 1: Producto encontrado ---
                     print(f"--- Fila {index+1}: Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {id_prod})...")
                     if registrar_venta_logica(id_prod, cantidad, precio, descuento):
                         exitos += 1
                     else:
-                        fallos += 1 # Venta falló (ej. sin stock de insumos)
+                        fallos += 1 
                 
                 else:
-                    # --- CASO 2: Producto NO encontrado ---
                     print(f"❌ ERROR Fila {index+1}: No se encontró producto con CLAVE='{clave_sr}' ('{nombre_prod_log}').")
                     print(f"⚠️  Se requiere intervención manual para registrar este producto.")
-                    
-                    # Llamamos a la función de UI que nos pasaron
                     nuevo_id = ui_crear_producto_callback(clave_sr, nombre_prod_log, row)
                     
                     if nuevo_id:
                         print(f"✅ Producto '{nombre_prod_log}' (ID: {nuevo_id}) creado.")
                         print(f"--- Fila {index+1}: RE-Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {nuevo_id})...")
-                        # Re-intentamos la venta con el nuevo ID
                         if registrar_venta_logica(nuevo_id, cantidad, precio, descuento):
                             exitos += 1
                         else:
@@ -155,7 +141,7 @@ def registrar_merma_logica(id_producto: int, cantidad: float, unidad_id: int, ob
             raise Exception("No se pudo registrar el movimiento de merma.")
             
         print(f"✅ Movimiento de merma registrado ID: {nuevo_mov['id_movimiento']}")
-        if not productos.actualizar_stock(id_producto, -cantidad_base): # <--- ¡EL CAMBIO CLAVE!
+        if not productos.actualizar_stock(id_producto, -cantidad_base): 
             raise Exception("No se pudo actualizar el stock por la merma.")
             
         print(f"✅ Stock del producto actualizado. (Descontado: {cantidad_base} unidades base)")
@@ -178,7 +164,7 @@ def registrar_produccion_de_platillo(id_producto_final: int, cantidad_producida:
     try:
         for ingrediente in receta_data['ingredientes']:
             id_insumo = ingrediente['id_insumo']
-            cantidad_necesaria = ingrediente['cantidad_estimada'] # Esto ya es Decimal
+            cantidad_necesaria = ingrediente['cantidad_estimada'] 
             cantidad_a_descontar = cantidad_necesaria * cantidad_producida_decimal
             
             print(f"--- Descontando {cantidad_a_descontar} de {ingrediente['nombre_insumo']}...")
@@ -199,7 +185,7 @@ def registrar_produccion_de_platillo(id_producto_final: int, cantidad_producida:
         print("ℹ️ Es posible que el inventario esté en un estado inconsistente. Se requiere revisión manual.")
         return False
 
-def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, observaciones: str = "Producción interna"):
+def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, unidad_nombre: str = 'unidades', observaciones: str = "Producción interna"):
     try:
         factor = unidades_medida.obtener_factor_base(unidad_id)
         if factor is None:
@@ -207,10 +193,22 @@ def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: in
         cantidad_decimal = Decimal(str(cantidad))
         factor_decimal = Decimal(factor)
         cantidad_base = cantidad_decimal * factor_decimal 
+        receta_data = recetas.obtener_receta_por_producto(id_producto)
+        if receta_data:
+            print("ℹ️ Receta encontrada. Descontando insumos...")
+            for ingrediente in receta_data['ingredientes']:
+                id_insumo = ingrediente['id_insumo']
+                cantidad_necesaria = ingrediente['cantidad_estimada'] 
+                cantidad_a_descontar = cantidad_necesaria * cantidad_decimal
+                print(f"--- Descontando {cantidad_a_descontar} de {ingrediente['nombre_insumo']}...")
+                if not productos.actualizar_stock(id_insumo, -cantidad_a_descontar):
+                    raise Exception(f"No se pudo actualizar el stock para el insumo: {ingrediente['nombre_insumo']}")
+        else:
+            print("ℹ️ No se encontró receta para este producto. Solo se sumará al stock.")
         if not productos.actualizar_stock(id_producto, cantidad_base):
-            raise Exception("No se pudo actualizar el stock del producto.")
+            raise Exception("No se pudo actualizar el stock del producto final.")
         produccion.registrar_produccion(id_producto, cantidad_decimal, unidad_id, observaciones)
-        print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_base} unidades base (equivale a {cantidad_decimal} L).")
+        print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_base} unidades base (equivale a {cantidad_decimal} {unidad_nombre}).")
         return True
         
     except Exception as e:

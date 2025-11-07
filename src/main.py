@@ -7,9 +7,6 @@ from . import recetas
 from . import familias
 from decimal import Decimal
 
-# --- INICIO: FUNCIONES DE AYUDA GLOBALES ---
-# (Movimos estas funciones aquí para que sean reutilizables)
-
 def _input_decimal(mensaje: str, default_cero: bool = False) -> Decimal:
     """Pide un número decimal al usuario de forma segura."""
     while True:
@@ -64,15 +61,8 @@ def _mostrar_familias():
     pprint([f"ID: {f['id_familia']} | {f['nombre']}" for f in lista])
     return True
 
-# --- FIN: FUNCIONES DE AYUDA GLOBALES ---
-
-
 def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fila_excel: dict) -> int:
-    """
-    UI interactiva para crear un nuevo producto. 
-    Llamada desde el proceso de ventas cuando un producto no se encuentra.
-    Retorna el nuevo ID de producto, o None si se cancela.
-    """
+
     print("\n" + "="*40)
     print("--- 🆕 Registrar Producto Faltante ---")
     print(f"El Excel reportó un producto con:")
@@ -86,11 +76,8 @@ def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fil
         return None
 
     try:
-        # Usar los valores del Excel o pedir al usuario que los corrija
         nombre = input(f"Confirmar Nombre (default: {nombre_default}): ").strip().upper() or nombre_default.upper()
         codigo_sr = input(f"Confirmar CLAVE (default: {codigo_sr_default}): ").strip() or codigo_sr_default
-        
-        # Intentar adivinar la familia
         familia_excel = fila_excel.get('GRUPO', '')
         familia_encontrada = familias.obtener_familia_por_nombre(familia_excel)
         
@@ -106,15 +93,11 @@ def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fil
         unidad_id = int(input("ID de Unidad de Medida (ej. 10=Pz, 7=Kg, 8=L): "))
         
         stock_inicial = _input_decimal("Stock Inicial (en la unidad elegida, ej. 10.5): ", default_cero=True)
-        
-        # Convertir stock a unidad base para la BD
         factor = unidades_medida.obtener_factor_base(unidad_id)
         stock_base = stock_inicial * factor
         
         es_vendido = _input_bool("¿Es un producto vendible? (s/n, default 's'): ", default=True)
         es_producido = _input_bool("¿Es un producto producido (usa receta)? (s/n, default 'n'): ", default=False)
-        
-        # Crear el producto en la BD
         nuevo_prod = productos.crear_producto(
             nombre=nombre,
             unidad_id=unidad_id,
@@ -129,13 +112,10 @@ def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fil
         if nuevo_prod:
             nuevo_id = nuevo_prod['id_producto']
             print(f"✅ Producto '{nombre}' (ID: {nuevo_id}) creado con éxito.")
-            
-            # Si es producido, preguntar por la receta
             if es_producido:
                 print("ℹ️  El producto se marcó como 'producido'.")
                 crear_receta = _input_bool("¿Desea crear su receta AHORA? (s/n): ", default=False)
                 if crear_receta:
-                    # (Llamada a la función de UI de recetas)
                     _gestionar_ingredientes_receta_ui(nuevo_id, nombre)
                 else:
                     print("Recuerde crear la receta más tarde desde el Menú 6.")
@@ -150,22 +130,10 @@ def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fil
         return None
 
 
-def cargar_ventas_excel_ui():
-    print("\n--- 📂 Cargar Ventas desde Excel ---")
-    ruta = input("Arrastra el archivo Excel a la consola o escribe la ruta completa y presiona Enter: ")
-    
-    # --- MODIFICACIÓN ---
-    # Pasamos la función interactiva como un 'callback'
-    logica_negocio.procesar_ventas_excel(ruta, _crear_producto_interactivo)
-    # --- FIN DE MODIFICACIÓN ---
-
-
 def registrar_produccion_simple_ui():
-    """UI para registrar producción simple (ej. Helados, Cremas)."""
     print("\n--- 🍳 Registrar Producción Simple ---")
     print("Seleccione el producto que ha producido (ej. HELADO, CREMA):")
     
-    # Filtramos para mostrar solo productos marcados como 'es_producido'
     lista_producibles = [p for p in productos.obtener_todos_los_productos() if p['es_producido']]
     if not lista_producibles:
         print("❌ Error: No hay productos marcados como 'producibles'.")
@@ -177,7 +145,6 @@ def registrar_produccion_simple_ui():
     try:
         id_prod = int(input("ID del producto a sumar stock: "))
         
-        # Validar que el ID esté en la lista de producibles
         producto_seleccionado = next((p for p in lista_producibles if p['id_producto'] == id_prod), None)
         
         if not producto_seleccionado:
@@ -194,12 +161,11 @@ def registrar_produccion_simple_ui():
             return
 
         print("\n--- 🥣 Registrando consumo de receta (si existe)... ---")
-        
-        # Llamamos a la lógica de negocio
         if logica_negocio.registrar_produccion_simple(
             id_producto=id_prod,
             cantidad=cantidad,
-            unidad_id=producto_seleccionado['unidad']
+            unidad_id=producto_seleccionado['unidad_id'],
+            unidad_nombre=producto_seleccionado['unidad_nombre']
         ):
             print("✅ Producción registrada y stock actualizado con éxito.")
         else:
@@ -242,13 +208,12 @@ def registrar_compra_ui():
 
 
 def registrar_merma_ui():
-    """UI para registrar merma o desperdicio."""
     print("\n--- 🗑️ Registrar Merma (Salida de Stock) ---")
     if not _mostrar_productos_disponibles(con_stock=True): return
     
     try:
         id_prod = int(input("ID del producto a dar de baja: "))
-        producto_info = productos.obtener_producto_por_id_completo(id_prod)
+        producto_info = productos.obtener_producto_por_id(id_prod)
         if not producto_info:
             print("❌ Error: ID de producto no válido.")
             return
@@ -273,7 +238,6 @@ def registrar_merma_ui():
 
 
 def _crear_nuevo_producto_ui():
-    """UI para el sub-menú de crear un producto."""
     print("\n--- + Crear Nuevo Producto ---")
     try:
         nombre = input("Nombre del producto: ").strip().upper()
@@ -286,8 +250,6 @@ def _crear_nuevo_producto_ui():
         unidad_id = int(input("ID de Unidad de Medida (ej. L, Kg, Pz): "))
         
         stock_inicial = _input_decimal("Stock Inicial (en la unidad elegida, ej. 10.5): ", default_cero=True)
-        
-        # Convertir stock a unidad base para la BD
         factor = unidades_medida.obtener_factor_base(unidad_id)
         stock_base = stock_inicial * factor
         
@@ -314,7 +276,6 @@ def _crear_nuevo_producto_ui():
 
 
 def gestionar_productos_ui():
-    """UI para el menú de gestión de productos (CRUD)."""
     while True:
         print("\n--- 📦 Gestión de Catálogo de Productos ---")
         print("1. Ver todos los productos")
@@ -349,7 +310,6 @@ def gestionar_productos_ui():
 
 
 def _gestionar_ingredientes_receta_ui(id_producto_final: int, nombre_producto: str):
-    """UI interactiva para añadir ingredientes a una nueva receta."""
     print(f"\n--- 🍲 Creando receta para: {nombre_producto} ---")
     nombre_receta = input(f"Nombre de la receta (default: 'Receta de {nombre_producto}'): ") or f"Receta de {nombre_producto}"
     
@@ -377,8 +337,6 @@ def _gestionar_ingredientes_receta_ui(id_producto_final: int, nombre_producto: s
             
             unidad_id = int(input("ID de la unidad de medida para este ingrediente: "))
             cantidad = _input_decimal(f"Cantidad (en la unidad seleccionada): ")
-            
-            # Convertir a unidad base para guardar en BD
             factor = unidades_medida.obtener_factor_base(unidad_id)
             cantidad_base = cantidad * factor
             
@@ -386,8 +344,8 @@ def _gestionar_ingredientes_receta_ui(id_producto_final: int, nombre_producto: s
             
             ingredientes.append({
                 'id_insumo': id_insumo,
-                'cantidad': cantidad_base, # Guardamos en unidad base
-                'unidad_id': unidades_medida.obtener_id_unidad_base(unidad_id) # Guardamos el ID de la unidad base (g/ml/pz)
+                'cantidad': cantidad_base, 
+                'unidad_id': unidades_medida.obtener_id_unidad_base(unidad_id)
             })
             
         except ValueError:
@@ -497,7 +455,7 @@ def main():
             registrar_produccion_simple_ui()
         elif opcion == '3':
             registrar_compra_ui()
-        elif opcion == '4.':
+        elif opcion == '4':
             registrar_merma_ui()
         elif opcion == '5':
             gestionar_productos_ui()
