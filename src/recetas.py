@@ -44,7 +44,6 @@ def eliminar_receta(id_receta: int):
         cur.execute("DELETE FROM recetas WHERE id_receta = %s;", (id_receta,))
         return cur.rowcount > 0
     
-
 def obtener_receta_por_producto(id_producto_final: int):
     with get_cursor() as cur:
         cur.execute(
@@ -69,4 +68,20 @@ def obtener_receta_por_producto(id_producto_final: int):
         )
         receta['ingredientes'] = cur.fetchall()
         return receta
-    
+
+def obtener_todas_las_recetas_con_producto():
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT 
+                r.id_receta, 
+                r.nombre, 
+                r.id_producto_final, 
+                p.nombre as nombre_producto
+            FROM recetas r
+            -- Usamos LEFT JOIN por si un producto fue eliminado pero la receta quedó
+            LEFT JOIN productos p ON r.id_producto_final = p.id_producto
+            ORDER BY p.nombre, r.nombre;
+            """
+        )
+        return cur.fetchall()
