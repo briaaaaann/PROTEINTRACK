@@ -119,3 +119,26 @@ def obtener_producto_por_codigo_sr(codigo_sr: str):
         except Exception as e:
             print(f"⚠️ ADVERTENCIA: Error al buscar código {codigo_sr}. Detalle: {e}")
             return None
+
+def actualizar_producto(id_producto: int, nombre: str, unidad_id: int, id_familia: int, codigo_softrestaurante: str, es_producido: bool, es_vendido: bool, activo: bool):
+    with get_cursor(commit=True) as cur:
+        try:
+            cur.execute(
+                """
+                UPDATE productos
+                SET 
+                    nombre = %s, 
+                    unidad = %s, 
+                    id_familia = %s, 
+                    codigo_softrestaurant = %s, 
+                    es_producido = %s, 
+                    es_vendido = %s, 
+                    activo = %s
+                WHERE id_producto = %s;
+                """,
+                (nombre, unidad_id, id_familia, codigo_softrestaurante, es_producido, es_vendido, activo, id_producto)
+            )
+            return cur.rowcount > 0
+        except Exception as e:
+            print(f"❌ Error en BD al actualizar producto: {e}")
+            return False

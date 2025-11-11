@@ -107,7 +107,6 @@ def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback):
     except Exception as e:
         print(f"❌ ERROR crítico al leer el archivo Excel: {e}")
 
-
 def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
     try:
         factor = unidades_medida.obtener_factor_base(unidad_id)

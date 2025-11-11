@@ -129,6 +129,10 @@ def _crear_producto_interactivo(codigo_sr_default: str, nombre_default: str, fil
         print(f"❌ Error fatal durante la creación: {e}")
         return None
 
+def cargar_ventas_excel_ui():
+    print("\n--- 📂 Cargar Ventas desde Excel ---")
+    ruta = input("Arrastra el archivo Excel a la consola o escribe la ruta completa y presiona Enter: ")
+    logica_negocio.procesar_ventas_excel(ruta, _crear_producto_interactivo)
 
 def registrar_produccion_simple_ui():
     print("\n--- 🍳 Registrar Producción Simple ---")
@@ -176,53 +180,28 @@ def registrar_produccion_simple_ui():
     except Exception as e:
         print(f"❌ Error inesperado: {e}")
 
-
-def registrar_compra_ui():
-    """UI para registrar la compra o entrada de un insumo."""
-    print("\n--- 🚚 Registrar Compra (Entrada de Stock) ---")
-    if not _mostrar_productos_disponibles(con_stock=True): return
-    
-    try:
-        id_prod = int(input("ID del producto que compró: "))
-        producto_info = productos.obtener_producto_por_id_completo(id_prod)
-        if not producto_info:
-            print("❌ Error: ID de producto no válido.")
-            return
-            
-        print(f"Producto seleccionado: {producto_info['nombre']}")
-        print(f"Unidad de medida base: {producto_info['unidad_base_nombre']}")
-        
-        if not _mostrar_unidades(): return
-        unidad_compra_id = int(input(f"¿En qué unidad compró? (ej. {producto_info['unidad_nombre']}, Costal, Caja, etc.): "))
-        cantidad_compra = _input_decimal(f"Cantidad comprada (en la unidad que seleccionó): ")
-        
-        if logica_negocio.registrar_compra_logica(id_prod, cantidad_compra, unidad_compra_id):
-            print("✅ Compra registrada y stock actualizado.")
-        else:
-            print("❌ Error al registrar la compra.")
-            
-    except ValueError:
-        print("❌ Error: ID y cantidad deben ser números.")
-    except Exception as e:
-        print(f"❌ Error inesperado: {e}")
-
-
 def registrar_merma_ui():
     print("\n--- 🗑️ Registrar Merma (Salida de Stock) ---")
-    if not _mostrar_productos_disponibles(con_stock=True): return
+    lista_productos_completa = productos.obtener_todos_los_productos(solo_activos=True)
+    
+    if not lista_productos_completa:
+        print("ℹ️ No hay productos registrados.")
+        return
+    print("\n--- 📦 Productos Disponibles ---")
+    pprint([f"ID: {p['id_producto']} | {p['nombre']} (Stock: {p['stock_convertido']:.3f} {p['unidad_nombre']})" for p in lista_productos_completa])
     
     try:
         id_prod = int(input("ID del producto a dar de baja: "))
-        producto_info = productos.obtener_producto_por_id(id_prod)
+        producto_info = next((p for p in lista_productos_completa if p['id_producto'] == id_prod), None)
+        
         if not producto_info:
             print("❌ Error: ID de producto no válido.")
             return
             
         print(f"Producto seleccionado: {producto_info['nombre']}")
         print(f"Stock actual: {producto_info['stock_convertido']:.3f} {producto_info['unidad_nombre']}")
-        
         if not _mostrar_unidades(): return
-        unidad_merma_id = int(input(f"¿En qué unidad midió la merma? (ej. {producto_info['unidad_nombre']}, {producto_info['unidad_base_nombre']}, etc.): "))
+        unidad_merma_id = int(input(f"¿En qué unidad midió la merma? (ej. {producto_info['unidad_nombre']}, Gramo, Mililitro, etc.): "))
         cantidad_merma = _input_decimal(f"Cantidad de merma (en la unidad que seleccionó): ")
         observaciones = input("Observaciones (opcional): ")
 
@@ -235,7 +214,6 @@ def registrar_merma_ui():
         print("❌ Error: ID y cantidad deben ser números.")
     except Exception as e:
         print(f"❌ Error inesperado: {e}")
-
 
 def _crear_nuevo_producto_ui():
     print("\n--- + Crear Nuevo Producto ---")
@@ -274,6 +252,65 @@ def _crear_nuevo_producto_ui():
     except Exception as e:
         print(f"❌ Error fatal durante la creación: {e}")
 
+def _editar_producto_ui():
+    print("\n--- ✏️ Editar Producto ---")
+    lista_productos_completa = productos.obtener_todos_los_productos(solo_activos=True)
+    if not lista_productos_completa:
+        print("ℹ️ No hay productos registrados.")
+        return
+
+    print("\n--- 📦 Productos Disponibles ---")
+    pprint([f"ID: {p['id_producto']} | {p['nombre']} (Stock: {p['stock_convertido']:.3f} {p['unidad_nombre']})" for p in lista_productos_completa])
+    
+    try:
+        id_prod = int(input("\nID del producto a editar: "))
+        prod_actual = productos.obtener_producto_por_id(id_prod)
+        
+        if not prod_actual:
+            print("❌ Error: Producto no encontrado.")
+            return
+
+        print(f"\nEditando: {prod_actual['nombre']} (ID: {id_prod})")
+        print("ℹ️  Deje el campo en blanco para conservar el valor actual.")
+        nombre = input(f"Nombre (actual: {prod_actual['nombre']}): ").strip().upper() or prod_actual['nombre']
+        codigo_sr = input(f"CLAVE Soft Restaurant (actual: {prod_actual['codigo_softrestaurant']}): ").strip() or prod_actual['codigo_softrestaurant']
+        
+        print(f"\nFamilia actual: ID {prod_actual['id_familia']}")
+        if _input_bool("¿Desea cambiar la familia? (s/n, default 'n'): ", default=False):
+            if not _mostrar_familias(): return
+            id_familia = int(input("Nuevo ID de Familia: "))
+        else:
+            id_familia = prod_actual['id_familia']
+
+        print(f"\nUnidad actual: ID {prod_actual['unidad']}")
+        if _input_bool("¿Desea cambiar la unidad de medida? (s/n, default 'n'): ", default=False):
+            if not _mostrar_unidades(): return
+            unidad_id = int(input("Nuevo ID de Unidad: "))
+        else:
+            unidad_id = prod_actual['unidad']
+
+        print("\n--- Flags Booleanos ---")
+        es_vendido = _input_bool(f"¿Es vendible? (actual: {prod_actual['es_vendido']}, default '{'s' if prod_actual['es_vendido'] else 'n'}'): ", default=prod_actual['es_vendido'])
+        es_producido = _input_bool(f"¿Es producido? (actual: {prod_actual['es_producido']}, default '{'s' if prod_actual['es_producido'] else 'n'}'): ", default=prod_actual['es_producido'])
+        activo = _input_bool(f"¿Está activo? (actual: {prod_actual['activo']}, default '{'s' if prod_actual['activo'] else 'n'}'): ", default=prod_actual['activo'])
+        if productos.actualizar_producto(
+            id_producto=id_prod,
+            nombre=nombre,
+            unidad_id=unidad_id,
+            id_familia=id_familia,
+            codigo_softrestaurante=codigo_sr,
+            es_producido=es_producido,
+            es_vendido=es_vendido,
+            activo=activo
+        ):
+            print(f"✅ Producto '{nombre}' (ID: {id_prod}) actualizado con éxito.")
+        else:
+            print("❌ Error: No se pudo actualizar el producto.")
+    
+    except ValueError:
+        print("❌ Error: El ID debe ser un número.")
+    except Exception as e:
+        print(f"❌ Error fatal durante la edición: {e}")
 
 def gestionar_productos_ui():
     while True:
@@ -291,7 +328,7 @@ def gestionar_productos_ui():
         elif opcion == '2':
             _crear_nuevo_producto_ui()
         elif opcion == '3':
-            print("ℹ️ Función no implementada.")
+            _editar_producto_ui()
         elif opcion == '4':
             print("\n--- - Desactivar Producto ---")
             if not _mostrar_productos_disponibles(): return
@@ -307,7 +344,6 @@ def gestionar_productos_ui():
             break
         else:
             print("❌ Opción no válida.")
-
 
 def _gestionar_ingredientes_receta_ui(id_producto_final: int, nombre_producto: str):
     print(f"\n--- 🍲 Creando receta para: {nombre_producto} ---")
@@ -369,27 +405,27 @@ def _gestionar_ingredientes_receta_ui(id_producto_final: int, nombre_producto: s
         print(f"❌ Error fatal al guardar la receta: {e}")
         return False
 
-
 def gestionar_recetas_ui():
-    """UI para el menú de gestión de recetas."""
     while True:
         print("\n--- 🍲 Gestión de Recetas ---")
         print("1. Ver todas las recetas")
         print("2. Crear nueva receta")
-        print("3. Ver detalle de receta")
-        print("4. Eliminar receta (Próximamente)")
-        print("5. Volver al menú principal")
+        print("3. Ver detalle de receta (Insumos)")
+        print("4. Volver al menú principal")
         
         opcion = input("Seleccione una opción: ")
-        
         if opcion == '1':
             print("\n--- 📜 Recetas Registradas ---")
+            
             lista = recetas.obtener_todas_las_recetas_con_producto()
             if not lista: 
                 print("ℹ️ No hay recetas registradas.")
                 continue
-            pprint([f"ID Receta: {r['id_receta']} | Producto: {r['nombre_producto']} | Nombre Receta: {r['nombre']}" for r in lista])
             
+            print("Formato: [ID Receta] | Producto Final -> (Nombre de la Receta)")
+            pprint([f"[{r['id_receta']}] | {r['nombre_producto']} -> ({r['nombre']})" for r in lista])
+            
+            print("\nℹ️ Para ver los ingredientes (insumos), use la 'Opción 3'.")
         elif opcion == '2':
             print("\n--- + Crear Nueva Receta ---")
             print("Seleccione el producto FINAL al que pertenece esta receta:")
@@ -405,8 +441,8 @@ def gestionar_recetas_ui():
             except ValueError:
                 print("❌ Error: ID debe ser un número.")
                 
-        elif opcion == '3.':
-            print("\n--- ℹ️ Ver Detalle de Receta ---")
+        elif opcion == '3':
+            print("\n--- ℹ️ Ver Detalle de Receta (Insumos) ---")
             try:
                 id_rec = int(input("ID de la receta a consultar: "))
                 detalle = recetas.obtener_receta_completa(id_rec)
@@ -416,21 +452,20 @@ def gestionar_recetas_ui():
                 
                 print(f"\n--- Detalle Receta ID: {detalle['id_receta']} ---")
                 print(f"Nombre: {detalle['nombre']}")
-                print(f"Producto Final ID: {detalle['id_producto_final']}")
-                print("Ingredientes:")
-                pprint(detalle['ingredientes'])
-                
+                print(f"Producto Final: {detalle['id_producto_final']}")
+                print("Ingredientes (Insumos):")
+                if not detalle['ingredientes']:
+                    print("  (Esta receta no tiene ingredientes asignados)")
+                else:
+                    for ing in detalle['ingredientes']:
+                        print(f"  - {ing['cantidad_estimada']} {ing['unidad']} de {ing['nombre']}")
             except ValueError:
                 print("❌ Error: ID debe ser un número.")
-                
-        elif opcion == '4':
-            print("ℹ️ Función no implementada.")
             
-        elif opcion == '5':
+        elif opcion == '4':
             break
         else:
             print("❌ Opción no válida.")
-
 
 def main():
     while True:
@@ -438,14 +473,11 @@ def main():
         print("--- OPERACIONES DIARIAS ---")
         print("1. 📂 Cargar Ventas desde Excel") 
         print("2. 🍳 Registrar Producción Simple (Helados, Cremas)")
-        print("3. 🚚 Registrar Compra (Entrada de Insumo)")
-        print("4. 🗑️ Registrar Merma (Desperdicio)")
+        print("3. 🗑️ Registrar Merma (Desperdicio)")
         print("\n--- ADMINISTRACIÓN ---")
-        print("5. 📦 Gestionar Catálogo de Productos")
-        print("6. 🍲 Gestionar Recetas")
-        print("7. 👪 Gestionar Familias (Próximamente)")
-        print("8. 📏 Gestionar Unidades de Medida (Próximamente)")
-        print("9. Salir")
+        print("4. 📦 Gestionar Catálogo de Productos")
+        print("5. 🍲 Gestionar Recetas")
+        print("6. Salir")
         
         opcion = input("Seleccione una opción: ")
 
@@ -454,18 +486,12 @@ def main():
         elif opcion == '2':
             registrar_produccion_simple_ui()
         elif opcion == '3':
-            registrar_compra_ui()
-        elif opcion == '4':
             registrar_merma_ui()
-        elif opcion == '5':
+        elif opcion == '4':
             gestionar_productos_ui()
-        elif opcion == '6':
+        elif opcion == '5':
             gestionar_recetas_ui()
-        elif opcion == '7':
-             print("ℹ️ Función 'Gestionar Familias' no implementada en este menú.")
-        elif opcion == '8':
-            print("ℹ️ Función 'Gestionar Unidades' no implementada en este menú.")
-        elif opcion == '9':
+        elif opcion == '6':
             print("👋 ¡Hasta luego!")
             sys.exit(0)
         else:
