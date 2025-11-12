@@ -1,7 +1,7 @@
 import sys
 import os
 from werkzeug.utils import secure_filename
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 from decimal import Decimal
 
@@ -29,6 +29,14 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 CORS(app) 
+
+@app.route('/merma')
+def pagina_registrar_merma():
+    return render_template('merma.html')
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory('static', path)
 
 @app.route('/api/test', methods=['GET'])
 def test_route():
