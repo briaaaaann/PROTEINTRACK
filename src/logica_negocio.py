@@ -45,11 +45,10 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         print(f"❌ Error en registrar_venta_logica: {e}")
         return False
     
-def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback): 
-    print(f"ℹ️ Iniciando carga de ventas desde: {ruta_archivo}")
+def procesar_ventas_excel(ruta_archivo: str):
+    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo}")
     try:
-        ruta_limpia = ruta_archivo.strip().strip('\'"')
-        df = pd.read_excel(ruta_limpia, header=4, dtype={'CLAVE': str}) 
+        df = pd.read_excel(ruta_archivo, header=4, dtype={'CLAVE': str}) 
         df = df.dropna(subset=['CLAVE'])
         
         print(f"✅ Excel leído. {len(df)} filas válidas encontradas. Procesando...")
@@ -76,19 +75,14 @@ def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback):
                 
                 else:
                     print(f"❌ ERROR Fila {index+1}: No se encontró producto con CLAVE='{clave_sr}' ('{nombre_prod_log}').")
-                    print(f"⚠️  Se requiere intervención manual para registrar este producto.")
-                    nuevo_id = ui_crear_producto_callback(clave_sr, nombre_prod_log, row)
-                    
-                    if nuevo_id:
-                        print(f"✅ Producto '{nombre_prod_log}' (ID: {nuevo_id}) creado.")
-                        print(f"--- Fila {index+1}: RE-Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {nuevo_id})...")
-                        if registrar_venta_logica(nuevo_id, cantidad, precio, descuento):
-                            exitos += 1
-                        else:
-                            fallos += 1
-                    else:
-                        print(f"🚫 Creación cancelada. Venta de '{nombre_prod_log}' OMITIDA.")
-                        fallos += 1
+                    return {
+                        "exito": False,
+                        "error": "Producto no encontrado",
+                        "fila_excel": index + 1,
+                        "clave_faltante": clave_sr,
+                        "nombre_producto": nombre_prod_log,
+                        "familia_grupo": row.get('GRUPO', 'N/A')
+                    }
             
             except KeyError as e:
                 print(f"❌ ERROR Fila {index+1}: Falta la columna {e} en el Excel. Venta omitida.")
@@ -97,15 +91,21 @@ def procesar_ventas_excel(ruta_archivo: str, ui_crear_producto_callback):
                 print(f"❌ ERROR Fila {index+1} ('{row.get('DESCRIPCION', 'N/A')}'): No se pudo procesar. Detalle: {e}")
                 fallos += 1
         
-        print("\n--- 📊 Resumen de Carga ---")
+        print("\n--- 📊 Resumen de Carga API ---")
         print(f"✅ Ventas procesadas con éxito: {exitos}")
         print(f"❌ Ventas con errores (omitidas): {fallos}")
-        print("---------------------------")
+        
+        return {
+            "exito": True,
+            "mensaje": "Archivo procesado completamente",
+            "filas_procesadas_exitosamente": exitos,
+            "filas_omitidas_por_error_interno": fallos
+        }
 
     except FileNotFoundError:
-        print(f"❌ ERROR: No se encontró el archivo en la ruta: {ruta_limpia}")
+        return {"exito": False, "error": f"No se encontró el archivo en la ruta: {ruta_archivo}"}
     except Exception as e:
-        print(f"❌ ERROR crítico al leer el archivo Excel: {e}")
+        return {"exito": False, "error": f"ERROR crítico al leer el archivo Excel: {str(e)}"}
 
 def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
     try:
