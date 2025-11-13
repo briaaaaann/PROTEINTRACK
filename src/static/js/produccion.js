@@ -4,31 +4,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const productoSelect = document.getElementById("producto-select");
     const unidadSelect = document.getElementById("unidad-select");
     const cantidadInput = document.getElementById("cantidad-input");
-    const obsInput = document.getElementById("obs-input");
     const guardarBtn = document.getElementById("guardar-btn");
     const mensajeDiv = document.getElementById("mensaje");
 
-    let listaProductos = []; 
+    let listaProductos = [];
 
     async function cargarProductos() {
         try {
             const response = await fetch(`${API_URL}/api/productos`);
-            
             if (!response.ok) {
                 throw new Error("No se pudieron cargar los productos");
             }
-
-            listaProductos = await response.json(); 
+            listaProductos = await response.json();
+            productoSelect.innerHTML = "<option value=''>Seleccione un producto...</option>";
             
-            productoSelect.innerHTML = "<option value=''>Seleccione un producto...</option>"; 
-
             listaProductos.forEach(producto => {
-                const option = document.createElement("option");
-                option.value = producto.id_producto;
-                option.textContent = `${producto.nombre} (Stock: ${producto.stock_convertido} ${producto.unidad_nombre})`;
-                option.setAttribute('data-unidad-id', producto.unidad_id);
-                option.setAttribute('data-unidad-nombre', producto.unidad_nombre);
-                productoSelect.appendChild(option);
+                
+                if (producto.es_registrable_produccion) {
+ 
+                    const option = document.createElement("option");
+                    option.value = producto.id_producto;
+                    option.textContent = `${producto.nombre} (Stock: ${producto.stock_convertido} ${producto.unidad_nombre})`;
+                    option.setAttribute('data-unidad-id', producto.unidad_id);
+                    option.setAttribute('data-unidad-nombre', producto.unidad_nombre);
+                    productoSelect.appendChild(option);
+                }
             });
 
         } catch (error) {
@@ -39,44 +39,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function actualizarUnidadPorDefecto() {
         const productoSeleccionado = productoSelect.options[productoSelect.selectedIndex];
-        
         if (!productoSeleccionado.value) {
             unidadSelect.innerHTML = "<option value=''>Cargando unidades...</option>";
             return;
         }
-
         const unidadId = productoSeleccionado.getAttribute('data-unidad-id');
         const unidadNombre = productoSeleccionado.getAttribute('data-unidad-nombre');
-
         unidadSelect.innerHTML = `<option value="${unidadId}">${unidadNombre}</option>`;
     }
 
-    async function registrarMerma() {
-
+    async function registrarProduccion() {
         const id_producto = productoSelect.value;
         const unidad_id = unidadSelect.value;
         const cantidad = cantidadInput.value;
-        const observaciones = obsInput.value;
+        const unidad_nombre = unidadSelect.options[unidadSelect.selectedIndex].text;
 
         if (!id_producto || !unidad_id || !cantidad) {
             mostrarMensaje("Por favor, complete todos los campos", "error");
             return;
         }
 
-        const datosMerma = {
+        const datosProduccion = {
             id_producto: parseInt(id_producto),
             unidad_id: parseInt(unidad_id),
             cantidad: parseFloat(cantidad),
-            observaciones: observaciones
+            unidad_nombre: unidad_nombre
         };
 
         try {
-            const response = await fetch(`${API_URL}/api/registrar-merma`, {
+            const response = await fetch(`${API_URL}/api/produccion-simple`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(datosMerma),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosProduccion),
             });
 
             const resultado = await response.json();
@@ -86,14 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             
             mostrarMensaje(resultado.mensaje, "exito");
-
             cantidadInput.value = "";
-            obsInput.value = "";
-
-            cargarProductos();
+            cargarProductos(); 
 
         } catch (error) {
-            console.error("Error al registrar merma:", error);
+            console.error("Error al registrar producción:", error);
             mostrarMensaje(`Error: ${error.message}`, "error");
         }
     }
@@ -105,17 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             mensajeDiv.className = "mensaje-error";
         }
-        
         setTimeout(() => {
             mensajeDiv.textContent = "";
             mensajeDiv.className = "";
         }, 3000);
     }
 
-    guardarBtn.addEventListener("click", registrarMerma);
-    
+    guardarBtn.addEventListener("click", registrarProduccion);
     productoSelect.addEventListener("change", actualizarUnidadPorDefecto);
-
     cargarProductos();
     actualizarUnidadPorDefecto();
 });

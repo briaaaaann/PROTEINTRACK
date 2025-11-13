@@ -99,24 +99,30 @@ def api_registrar_merma():
         print(f"ERROR en /api/registrar-merma: {e}")
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
         
+@app.route('/produccion')
+def pagina_registrar_produccion():
+    return render_template('produccion.html') 
+
 @app.route('/api/productos', methods=['POST'])
 def api_crear_producto():
     print("Recibida petición POST en /api/productos")
     try:
         datos = request.json
+        
         nuevo_prod = productos.crear_producto(
             nombre=datos['nombre'],
             unidad_id=int(datos['unidad_id']),
             id_familia=int(datos['id_familia']),
-            stock_inicial=float(datos.get('stock_inicial', 0)), 
+            stock_inicial=float(datos.get('stock_inicial', 0)),
             codigo_softrestaurante=datos.get('codigo_softrestaurante', None),
             es_producido=bool(datos.get('es_producido', False)),
             es_vendido=bool(datos.get('es_vendido', True)),
-            activo=True
+            activo=True,
+            es_registrable_produccion=bool(datos.get('es_registrable_produccion', False))
         )
         
         if nuevo_prod:
-            return jsonify(nuevo_prod), 201 
+            return jsonify(nuevo_prod), 201
         else:
             return jsonify({"error": "No se pudo crear el producto"}), 400
             
@@ -129,6 +135,7 @@ def api_editar_producto(id_producto):
     print(f"Recibida petición PUT en /api/productos/{id_producto}")
     try:
         datos = request.json
+        
         exito = productos.actualizar_producto(
             id_producto=id_producto,
             nombre=datos['nombre'],
@@ -137,7 +144,8 @@ def api_editar_producto(id_producto):
             codigo_softrestaurante=datos.get('codigo_softrestaurante', None),
             es_producido=bool(datos.get('es_producido', False)),
             es_vendido=bool(datos.get('es_vendido', True)),
-            activo=bool(datos.get('activo', True))
+            activo=bool(datos.get('activo', True)),
+            es_registrable_produccion=bool(datos.get('es_registrable_produccion', False))
         )
         
         if exito:

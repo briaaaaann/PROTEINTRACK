@@ -1,15 +1,22 @@
 from .conexion import get_cursor
 
-def crear_producto(nombre: str, unidad_id: int, id_familia: int,  stock_inicial: float = 0, codigo_softrestaurante: int = None, es_producido: bool = False, es_vendido: bool = True, activo: bool = True):
+def crear_producto(nombre: str, unidad_id: int, id_familia: int,  stock_inicial: float = 0, codigo_softrestaurante: int = None, es_producido: bool = False, es_vendido: bool = True, activo: bool = True, es_registrable_produccion: bool = False):
     with get_cursor(commit=True) as cur:
         cur.execute(
             """
-            INSERT INTO productos (nombre, unidad, stock, codigo_softrestaurant, es_producido, es_vendido, activo, id_familia
+            INSERT INTO productos (
+                nombre, unidad, stock, codigo_softrestaurant, 
+                es_producido, es_vendido, activo, id_familia,
+                es_registrable_produccion 
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id_producto;
             """,
-            (nombre, unidad_id, stock_inicial, codigo_softrestaurante, es_producido, es_vendido, activo, id_familia)
+            (
+                nombre, unidad_id, stock_inicial, codigo_softrestaurante, 
+                es_producido, es_vendido, activo, id_familia,
+                es_registrable_produccion
+            )
         )
         id_creado = cur.fetchone()
         return id_creado
@@ -34,8 +41,7 @@ def obtener_todos_los_productos(solo_activos: bool = True):
                 p.activo,
                 p.es_producido, 
                 p.es_vendido,
-                
-                -- Conversion de stock
+                p.es_registrable_produccion,
                 CASE 
                     WHEN um.factor_base > 0 THEN p.stock / um.factor_base
                     ELSE 0 
@@ -44,7 +50,7 @@ def obtener_todos_los_productos(solo_activos: bool = True):
             FROM productos p
             JOIN familias f ON p.id_familia = f.id_familia
             JOIN unidades_medida um ON p.unidad = um.id
-            -- (Se eliminó el JOIN a 'um_base' que causaba el error)
+
         """
         if solo_activos:
             sql_query += " WHERE p.activo = TRUE"
@@ -120,7 +126,7 @@ def obtener_producto_por_codigo_sr(codigo_sr: str):
             print(f"⚠️ ADVERTENCIA: Error al buscar código {codigo_sr}. Detalle: {e}")
             return None
 
-def actualizar_producto(id_producto: int, nombre: str, unidad_id: int, id_familia: int, codigo_softrestaurante: str, es_producido: bool, es_vendido: bool, activo: bool):
+def actualizar_producto(id_producto: int, nombre: str, unidad_id: int, id_familia: int, codigo_softrestaurante: str, es_producido: bool, es_vendido: bool, activo: bool, es_registrable_produccion: bool):
     with get_cursor(commit=True) as cur:
         try:
             cur.execute(
@@ -133,10 +139,16 @@ def actualizar_producto(id_producto: int, nombre: str, unidad_id: int, id_famili
                     codigo_softrestaurant = %s, 
                     es_producido = %s, 
                     es_vendido = %s, 
-                    activo = %s
+                    activo = %s,
+                    es_registrable_produccion = %s
                 WHERE id_producto = %s;
                 """,
-                (nombre, unidad_id, id_familia, codigo_softrestaurante, es_producido, es_vendido, activo, id_producto)
+                (
+                    nombre, unidad_id, id_familia, codigo_softrestaurante, 
+                    es_producido, es_vendido, activo, 
+                    es_registrable_produccion, 
+                    id_producto
+                )
             )
             return cur.rowcount > 0
         except Exception as e:
