@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Ventas - ProteinTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"], input[type="text"], input[type="number"], select, button {
+            width: 100%; padding: 10px; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
+        }
+        button {
+            color: white; border: none; font-size: 16px; cursor: pointer;
+        }
+        .btn-upload { background-color: #337ab7; } 
+        .btn-create { background-color: #5cb85c; margin-top: 10px; } 
+        
+        #mensaje { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
+        .mensaje-exito { background-color: #dff0d8; color: #3c763d; }
+        .mensaje-error { background-color: #f2dede; color: #a94442; }
+        .mensaje-info { background-color: #d9edf7; color: #31708f; }
+        #crear-producto-container {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Cargar Ventas 📂</h1>
+        <div class="form-group">
+            <label for="file-input">Seleccionar archivo Excel (.xls, .xlsx):</label>
+            <input type="file" id="file-input" accept=".xls,.xlsx">
+        </div>
+        <button id="upload-btn" class="btn-upload">Cargar Archivo</button>
+        <div id="mensaje"></div> <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
+        <hr>
+
+        <div id="crear-producto-container">
+            <h2>Producto No Encontrado</h2>
+            <p id="error-detalle" class="mensaje-error"></p>
+            <p>Por favor, complete los datos para crearlo y reintente la carga.</p>
+            
+            <div class="form-group">
+                <label for="clave-input">CLAVE (Soft Restaurant):</label>
+                <input type="text" id="clave-input" readonly style="background-color: #eee;">
+            </div>
+            <div class="form-group">
+                <label for="nombre-input">Nombre del Producto:</label>
+                <input type="text" id="nombre-input">
+            </div>
+            <div class="form-group">
+                <label for="familia-select">Familia:</label>
+                <select id="familia-select">
+                    <option value="">Cargando familias...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="unidad-select">Unidad de Medida (para Stock):</label>
+                <select id="unidad-select">
+                    <option value="">Cargando unidades...</option>
+                </select>
+            </div>
+
+            <button id="crear-btn" class="btn-create">Crear Producto y Reintentar</button>
+        </div>
+    </div>
+
+    <script src="/static/js/ventas.js"></script>
+</body>
+</html>

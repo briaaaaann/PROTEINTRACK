@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProteinTrack - Inicio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .menu-container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .menu-button {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            box-sizing: border-box; 
+            transition: transform 0.2s;
+        }
+        .menu-button:hover {
+            transform: scale(1.02);
+        }
+        .btn-produccion { background-color: #5cb85c; } 
+        .btn-merma { background-color: #d9534f; } 
+        .btn-ventas { background-color: #337ab7; } 
+    </style>
+</head>
+<body>
+
+    <div class="menu-container">
+        <h1>🥗 ProteinTrack</h1>
+        
+        <a href="/produccion" class="menu-button btn-produccion">
+            🍳 Registrar Producción Simple
+        </a>
+        
+        <a href="/merma" class="menu-button btn-merma">
+            🗑️ Registrar Merma
+        </a>
+
+        <a href="/ventas" class="menu-button btn-ventas" style="background-color: #777;" onclick="alert('Función en desarrollo'); return false;">
+            📂 Cargar Ventas (Excel)
+        </a>
+    </div>
+
+</body>
+</html>

@@ -45,50 +45,59 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         print(f"❌ Error en registrar_venta_logica: {e}")
         return False
     
-def procesar_ventas_excel(ruta_archivo: str):
-    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo}")
+def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1):
+    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Empezando en fila {fila_inicio})")
     try:
         df = pd.read_excel(ruta_archivo, header=4, dtype={'CLAVE': str}) 
         df = df.dropna(subset=['CLAVE'])
         
-        print(f"✅ Excel leído. {len(df)} filas válidas encontradas. Procesando...")
+        if fila_inicio > 1:
+            df_a_procesar = df.iloc[fila_inicio - 1:]
+        else:
+            df_a_procesar = df
+        
+        print(f"✅ Excel leído. {len(df_a_procesar)} filas válidas a procesar.")
         
         exitos = 0
         fallos = 0
-        for index, row in df.iterrows():
+        
+        for index, row in df_a_procesar.iterrows():
+            fila_log = df.index.get_loc(index) + 1
+            
             try:
                 clave_sr = str(row['CLAVE']).split('.')[0]
-                
                 nombre_prod_log = row['DESCRIPCION'] 
                 cantidad = row['CANTIDAD']
                 precio = row['PRECIO']
                 descuento = row.get('Descuento', 0) 
-
+                
                 id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
                 
-                if id_prod: 
-                    print(f"--- Fila {index+1}: Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {id_prod})...")
+                if id_prod:
+                    print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {id_prod})...")
                     if registrar_venta_logica(id_prod, cantidad, precio, descuento):
                         exitos += 1
                     else:
-                        fallos += 1 
+                        fallos += 1
                 
                 else:
-                    print(f"❌ ERROR Fila {index+1}: No se encontró producto con CLAVE='{clave_sr}' ('{nombre_prod_log}').")
+
+                    print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}' ('{nombre_prod_log}').")
                     return {
                         "exito": False,
                         "error": "Producto no encontrado",
-                        "fila_excel": index + 1,
+                        "filas_procesadas_exitosamente": exitos, 
+                        "fila_excel": fila_log, 
                         "clave_faltante": clave_sr,
                         "nombre_producto": nombre_prod_log,
                         "familia_grupo": row.get('GRUPO', 'N/A')
                     }
-            
+
             except KeyError as e:
-                print(f"❌ ERROR Fila {index+1}: Falta la columna {e} en el Excel. Venta omitida.")
+                print(f"❌ ERROR Fila {fila_log}: Falta la columna {e} en el Excel. Venta omitida.")
                 fallos += 1
             except Exception as e:
-                print(f"❌ ERROR Fila {index+1} ('{row.get('DESCRIPCION', 'N/A')}'): No se pudo procesar. Detalle: {e}")
+                print(f"❌ ERROR Fila {fila_log} ('{row.get('DESCRIPCION', 'N/A')}'): No se pudo procesar. Detalle: {e}")
                 fallos += 1
         
         print("\n--- 📊 Resumen de Carga API ---")
@@ -102,8 +111,6 @@ def procesar_ventas_excel(ruta_archivo: str):
             "filas_omitidas_por_error_interno": fallos
         }
 
-    except FileNotFoundError:
-        return {"exito": False, "error": f"No se encontró el archivo en la ruta: {ruta_archivo}"}
     except Exception as e:
         return {"exito": False, "error": f"ERROR crítico al leer el archivo Excel: {str(e)}"}
 

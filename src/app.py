@@ -13,12 +13,14 @@ try:
     from . import productos
     from . import recetas
     from . import unidades_medida
+    from . import familias
 except ImportError:
     print("❌ Error: No se pudieron importar los módulos locales. Asegúrate de correr con 'python -m src.app'")
     import logica_negocio
     import productos
     import recetas
     import unidades_medida
+    from . import familias
 
 app = Flask(__name__)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -30,9 +32,21 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 CORS(app) 
 
+@app.route('/')
+def pagina_principal():
+    return render_template('index.html')
+
 @app.route('/merma')
 def pagina_registrar_merma():
     return render_template('merma.html')
+
+@app.route('/produccion')
+def pagina_registrar_produccion():
+    return render_template('produccion.html') 
+
+@app.route('/ventas')
+def pagina_cargar_ventas():
+    return render_template('ventas.html')
 
 @app.route('/static/<path:path>')
 def send_static(path):
@@ -99,10 +113,6 @@ def api_registrar_merma():
         print(f"ERROR en /api/registrar-merma: {e}")
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
         
-@app.route('/produccion')
-def pagina_registrar_produccion():
-    return render_template('produccion.html') 
-
 @app.route('/api/productos', methods=['POST'])
 def api_crear_producto():
     print("Recibida petición POST en /api/productos")
@@ -174,11 +184,15 @@ def api_desactivar_producto(id_producto):
 
 @app.route('/api/upload-ventas', methods=['POST'])
 def api_upload_ventas_excel():
+
     print("Recibida petición POST en /api/upload-ventas")
+    
     if 'file' not in request.files:
         return jsonify({"exito": False, "error": "No se encontró la parte del archivo ('file')"}), 400
     
     file = request.files['file']
+    
+    fila_inicio = int(request.form.get('fila_inicio', 1))
     
     if file.filename == '':
         return jsonify({"exito": False, "error": "No se seleccionó ningún archivo"}), 400
@@ -187,14 +201,20 @@ def api_upload_ventas_excel():
         try:
             filename = secure_filename(file.filename)
             ruta_guardada = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(ruta_guardada)
-            print(f"Archivo guardado temporalmente en: {ruta_guardada}")
-            resultado = logica_negocio.procesar_ventas_excel(ruta_guardada)
-            os.remove(ruta_guardada)
-            if resultado["exito"]:
-                return jsonify(resultado), 200 # OK
+
+            if fila_inicio == 1:
+                file.save(ruta_guardada)
+                print(f"Archivo guardado temporalmente en: {ruta_guardada}")
             else:
-                return jsonify(resultado), 200 
+                print(f"Reintentando procesamiento del archivo: {ruta_guardada}")
+
+            resultado = logica_negocio.procesar_ventas_excel(ruta_guardada, fila_inicio)
+
+            if resultado["exito"]:
+                os.remove(ruta_guardada)
+                print(f"Archivo temporal eliminado: {ruta_guardada}")
+
+            return jsonify(resultado), 200 
 
         except Exception as e:
             print(f"ERROR en /api/upload-ventas: {str(e)}")
@@ -257,6 +277,22 @@ def api_eliminar_receta(id_receta):
     except Exception as e:
         print(f"ERROR en DELETE /api/recetas/{id_receta}: {e}")
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@app.route('/api/familias', methods=['GET'])
+def api_get_familias():
+    try:
+        lista = familias.obtener_todas_las_familias()
+        return jsonify(lista), 200
+    except Exception as e:
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+
+@app.route('/api/unidades', methods=['GET'])
+def api_get_unidades():
+    try:
+        lista = unidades_medida.obtener_todas_las_unidades()
+        return jsonify(lista), 200
+    except Exception as e:
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
 def main():
     print("🚀 Iniciando servidor Flask en http://127.0.0.1:5000")
