@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - ProteinTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: space-between; }
+        input[type="text"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-new { background-color: #5cb85c; }
+        .btn-edit { background-color: #337ab7; padding: 5px 0; font-size: 12px; }
+        .btn-delete { background-color: #d9534f; padding: 5px 0; font-size: 12px; margin-left: 5px;}
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #333; }
+        tr:hover { background-color: #f1f1f1; }
+
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; color: white; margin-right: 3px; }
+        .badge-prod { background-color: #5bc0de; } 
+        .badge-reg { background-color: #f0ad4e; } 
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 500px; border-radius: 8px; max-height: 90vh; overflow-y: auto;}
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .checkbox-group input { width: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📦 Catálogo de Productos</h1>
+        
+        <div class="toolbar">
+            <input type="text" id="buscador" placeholder="🔍 Buscar por nombre o clave..." onkeyup="filtrarTabla()">
+            <button class="btn-new" onclick="abrirModalNuevo()">+ Nuevo Producto</button>
+        </div>
+
+        <table id="tabla-productos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Familia</th>
+                    <th>Unidad</th>
+                    <th>Stock</th>
+                    <th>Tipo</th> <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body">
+                </tbody>
+        </table>
+
+        <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
+    </div>
+
+    <div id="modal-producto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2 id="modal-titulo">Editar Producto</h2>
+            
+            <input type="hidden" id="prod-id"> <div class="form-group">
+                <label>Nombre:</label>
+                <input type="text" id="prod-nombre">
+            </div>
+            <div class="form-group">
+                <label>Clave SoftRestaurant:</label>
+                <input type="text" id="prod-clave">
+            </div>
+            <div class="form-group">
+                <label>Familia:</label>
+                <select id="prod-familia"></select>
+            </div>
+            <div class="form-group">
+                <label>Unidad de Medida:</label>
+                <select id="prod-unidad"></select>
+            </div>
+
+            <hr>
+            <p><strong>Configuración:</strong></p>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="check-vendido" checked>
+                <label for="check-vendido">Es Vendido (Sale en Tickets)</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="check-producido">
+                <label for="check-producido">Tiene Receta (Se cocina al venderse)</label>
+            </div>
+            <div class="checkbox-group" style="background-color: #fff3cd; padding: 5px;">
+                <input type="checkbox" id="check-registrable">
+                <label for="check-registrable"><strong>Registrar Producción</strong> (Sale en botón 'Producción Simple')</label>
+            </div>
+
+            <button class="btn-new" onclick="guardarProducto()" style="width: 100%; margin-top: 15px;">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <script src="/static/js/productos.js"></script>
+</body>
+</html>

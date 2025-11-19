@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Stock - ProteinTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        input[type="date"] { padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-consultar { background-color: #337ab7; }
+        .btn-generar { background-color: #f0ad4e; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #333; }
+        tr:hover { background-color: #f5f5f5; }
+        .no-data { text-align: center; color: #777; padding: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📜 Historial de Stock Diario</h1>
+        
+        <div class="controls">
+            <input type="date" id="fecha-input">
+            <button class="btn-consultar" onclick="consultarHistorial()">🔍 Consultar Fecha</button>
+            <button class="btn-generar" onclick="generarSnapshot()">📸 Tomar Foto de Hoy</button>
+        </div>
+
+        <div id="mensaje" style="text-align: center; margin-bottom: 10px;"></div>
+
+        <table id="tabla-historial">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Stock Registrado</th>
+                    <th>Unidad</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body">
+                </tbody>
+        </table>
+        
+        <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000";
+        const tablaBody = document.getElementById("tabla-body");
+        const mensajeDiv = document.getElementById("mensaje");
+        document.getElementById("fecha-input").valueAsDate = new Date();
+
+        async function generarSnapshot() {
+            if(!confirm("¿Estás seguro de actualizar el registro de stock de HOY con los valores actuales?")) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/api/historial/generar`, { method: 'POST' });
+                const data = await res.json();
+                if(res.ok) {
+                    mensajeDiv.textContent = "✅ Foto guardada: " + data.productos_procesados + " productos.";
+                    consultarHistorial(); 
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch(e) { alert("Error de red: " + e); }
+        }
+
+        async function consultarHistorial() {
+            const fecha = document.getElementById("fecha-input").value;
+            if(!fecha) return;
+
+            tablaBody.innerHTML = "<tr><td colspan='3' style='text-align:center'>Cargando...</td></tr>";
+            mensajeDiv.textContent = "";
+
+            try {
+                const res = await fetch(`${API_URL}/api/historial/${fecha}`);
+                const datos = await res.json();
+
+                tablaBody.innerHTML = "";
+                
+                if(datos.length === 0) {
+                    tablaBody.innerHTML = "<tr><td colspan='3' class='no-data'>No hay registros guardados para esta fecha.</td></tr>";
+                    return;
+                }
+
+                datos.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row.nombre}</td>
+                        <td>${parseFloat(row.stock_registrado).toFixed(3)}</td>
+                        <td>${row.unidad_nombre}</td>
+                    `;
+                    tablaBody.appendChild(tr);
+                });
+
+            } catch(e) {
+                tablaBody.innerHTML = "<tr><td colspan='3'>Error al cargar datos</td></tr>";
+            }
+        }
+    </script>
+</body>
+</html>
