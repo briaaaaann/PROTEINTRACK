@@ -45,3 +45,4 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 UPDATE productos SET codigo_softrestaurant = SUBSTRING(codigo_softrestaurant FROM 2) WHERE codigo_softrestaurant LIKE '''%';
 ALTER TABLE productos ADD COLUMN es_registrable_produccion BOOLEAN DEFAULT FALSE;
 UPDATE productos SET es_registrable_produccion = TRUE WHERE id_producto IN (21, 23, 19, 22, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 221, 216, 217, 273, 213, 229, 236, 272, 240, 251, 243, 246, 250, 206, 258, 256, 276, 277, 231, 225, 561, 559, 560, 567, 294, 292, 293, 318, 305, 283, 339, 284, 306, 314, 307, 570, 311, 335, 281, 320, 332, 333, 26, 27, 24, 30, 562, 563, 564, 568, 569);
+CREATE TABLE stock_diario (id_registro SERIAL PRIMARY KEY, id_producto INTEGER NOT NULL REFERENCES productos(id_producto), fecha DATE NOT NULL DEFAULT CURRENT_DATE, stock_registrado DECIMAL(10, 3) NOT NULL, CONSTRAINT unique_stock_diario UNIQUE (id_producto, fecha));

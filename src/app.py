@@ -14,6 +14,7 @@ try:
     from . import recetas
     from . import unidades_medida
     from . import familias
+    from . import historial
 except ImportError:
     print("❌ Error: No se pudieron importar los módulos locales. Asegúrate de correr con 'python -m src.app'")
     import logica_negocio
@@ -21,6 +22,7 @@ except ImportError:
     import recetas
     import unidades_medida
     from . import familias
+    from . import historial
 
 app = Flask(__name__)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -293,6 +295,30 @@ def api_get_unidades():
         return jsonify(lista), 200
     except Exception as e:
         return jsonify({"error": f"Error interno: {str(e)}"}), 500
+
+@app.route('/historial')
+def pagina_historial():
+    return render_template('historial.html')
+
+@app.route('/api/historial/generar', methods=['POST'])
+def api_generar_snapshot():
+    try:
+        resultado = historial.generar_snapshot_diario()
+        return jsonify(resultado), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/historial/<string:fecha>', methods=['GET'])
+def api_ver_historial(fecha):
+    try:
+        datos = historial.obtener_historial_por_fecha(fecha)
+        return jsonify(datos), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/productos')
+def pagina_gestion_productos():
+    return render_template('productos.html')
 
 def main():
     print("🚀 Iniciando servidor Flask en http://127.0.0.1:5000")
