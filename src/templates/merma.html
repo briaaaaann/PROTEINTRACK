@@ -32,11 +32,13 @@
         
         <div class="form-group">
             <label for="producto-select">Producto:</label>
-            <select id="producto-select">
-                <option value="">Cargando productos...</option>
+            <input type="text" id="buscador-producto" placeholder="🔍 Escribe para buscar..." style="margin-bottom: 5px; border: 1px solid #337ab7;">
+            
+            <select id="producto-select" size="5"> <option value="">Cargando productos...</option>
             </select>
+            <small style="color: #666; font-size: 0.8em;">* Selecciona un producto de la lista</small>
         </div>
-
+        
         <div class="form-group">
             <label for="unidad-select">Unidad de Medida:</label>
             <select id="unidad-select">

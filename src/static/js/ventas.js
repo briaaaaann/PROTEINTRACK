@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    const API_URL = "http://127.0.0.1:5000";
+    const API_URL = "http://192.168.1.130:5000";
     const fileInput = document.getElementById("file-input");
     const uploadBtn = document.getElementById("upload-btn");
     const mensajeDiv = document.getElementById("mensaje");

@@ -325,7 +325,7 @@ def pagina_gestion_recetas():
     return render_template('recetas.html')
 
 def main():
-    print("🚀 Iniciando servidor Flask en http://127.0.0.1:5000")
+    print("🚀 Iniciando servidor Flask en http://192.168.1.130:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
 
 if __name__ == "__main__":

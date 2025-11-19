@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    const API_URL = "http://127.0.0.1:5000";
+    const API_URL = "http://192.168.1.130:5000";
     const productoSelect = document.getElementById("producto-select");
     const unidadSelect = document.getElementById("unidad-select");
     const cantidadInput = document.getElementById("cantidad-input");
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function cargarProductos() {
         try {
-            const response = await fetch(`${API_URL}/api/productos`);
+            const response = await fetch(`${API_URL}/api/productos`); 
             if (!response.ok) {
                 throw new Error("No se pudieron cargar los productos");
             }
@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
             listaProductos.forEach(producto => {
                 
                 if (producto.es_registrable_produccion) {
- 
                     const option = document.createElement("option");
                     option.value = producto.id_producto;
-                    option.textContent = `${producto.nombre} (Stock: ${producto.stock_convertido} ${producto.unidad_nombre})`;
+                    const stockFormateado = parseFloat(producto.stock_convertido).toFixed(3);
+                    option.textContent = `${producto.nombre} (Stock: ${stockFormateado} ${producto.unidad_nombre})`;
                     option.setAttribute('data-unidad-id', producto.unidad_id);
                     option.setAttribute('data-unidad-nombre', producto.unidad_nombre);
                     productoSelect.appendChild(option);
