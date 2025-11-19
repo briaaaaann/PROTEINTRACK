@@ -320,6 +320,10 @@ def api_ver_historial(fecha):
 def pagina_gestion_productos():
     return render_template('productos.html')
 
+@app.route('/recetas')
+def pagina_gestion_recetas():
+    return render_template('recetas.html')
+
 def main():
     print("🚀 Iniciando servidor Flask en http://127.0.0.1:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
