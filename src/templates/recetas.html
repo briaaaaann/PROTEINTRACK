@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Recetas - ProteinTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-end; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-new { background-color: #5cb85c; }
+        .btn-delete { background-color: #d9534f; padding: 5px 10px; font-size: 14px; margin-left: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal-content { 
+            background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; 
+            width: 700px; border-radius: 8px; max-height: 90vh; overflow-y: auto; 
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+
+        .ingredientes-table td { padding: 5px; border: none; }
+        .btn-add-ing { background-color: #337ab7; font-size: 0.9em; margin-top: 10px; }
+        .btn-remove-ing { background-color: #d9534f; color: white; border: none; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🍲 Gestión de Recetas</h1>
+        
+        <div class="toolbar">
+            <button class="btn-new" onclick="abrirModalNueva()">+ Nueva Receta</button>
+        </div>
+
+        <table id="tabla-recetas">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Producto Final (Resultado)</th>
+                    <th>Nombre de la Receta</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body"></tbody>
+        </table>
+        
+        <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
+    </div>
+
+    <div id="modal-receta" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>Nueva Receta</h2>
+            
+            <div class="form-group">
+                <label>Producto Final (¿Qué estamos cocinando?):</label>
+                <select id="receta-producto-final"></select>
+                <small style="color: #666;">Solo aparecen productos marcados como "Producido"</small>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de la Receta:</label>
+                <input type="text" id="receta-nombre" placeholder="Ej. Receta Waffles 2025">
+            </div>
+
+            <hr>
+            <h3>Ingredientes</h3>
+            <table class="ingredientes-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Insumo</th>
+                        <th style="width: 20%;">Cantidad</th>
+                        <th style="width: 20%;">Unidad</th>
+                        <th style="width: 10%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="lista-ingredientes">
+                    </tbody>
+            </table>
+            <button class="btn-add-ing" onclick="agregarFilaIngrediente()">+ Agregar Ingrediente</button>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn-new" onclick="guardarReceta()" style="width: 100%;">Guardar Receta</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/recetas.js"></script>
+</body>
+</html>
