@@ -47,32 +47,56 @@
         <hr>
 
         <div id="crear-producto-container">
-            <h2>Producto No Encontrado</h2>
-            <p id="error-detalle" class="mensaje-error"></p>
-            <p>Por favor, complete los datos para crearlo y reintente la carga.</p>
+            <h2 style="color: #d9534f;">⚠️ Producto No Encontrado</h2>
+            <p id="error-detalle" class="mensaje-error" style="font-weight: bold;"></p>
+            <p>Complete los datos para crearlo. Si el producto se prepara (ej. Waffle, Frappé), agregue su receta aquí mismo.</p>
             
             <div class="form-group">
-                <label for="clave-input">CLAVE (Soft Restaurant):</label>
+                <label>CLAVE (Soft Restaurant):</label>
                 <input type="text" id="clave-input" readonly style="background-color: #eee;">
             </div>
             <div class="form-group">
-                <label for="nombre-input">Nombre del Producto:</label>
+                <label>Nombre del Producto:</label>
                 <input type="text" id="nombre-input">
             </div>
             <div class="form-group">
-                <label for="familia-select">Familia:</label>
+                <label>Familia:</label>
                 <select id="familia-select">
-                    <option value="">Cargando familias...</option>
+                    <option value="">Cargando...</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="unidad-select">Unidad de Medida (para Stock):</label>
+                <label>Unidad de Medida (Venta):</label>
                 <select id="unidad-select">
-                    <option value="">Cargando unidades...</option>
+                    <option value="">Cargando...</option>
                 </select>
             </div>
 
-            <button id="crear-btn" class="btn-create">Crear Producto y Reintentar</button>
+            <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="check-tiene-receta" style="width: auto; margin-right: 10px;">
+                    <strong>Este producto lleva Receta (Ingredientes)</strong>
+                </label>
+
+                <div id="seccion-ingredientes" style="display: none; background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <h4>Ingredientes de la Receta:</h4>
+                    <table style="width: 100%; font-size: 0.9em;">
+                        <thead>
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Cant.</th>
+                                <th>Unidad</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-ingredientes">
+                            </tbody>
+                    </table>
+                    <button type="button" id="btn-add-ing" style="background-color: #337ab7; margin-top: 5px; padding: 5px 10px; font-size: 0.8em;">+ Agregar Ingrediente</button>
+                </div>
+            </div>
+
+            <button id="crear-btn" class="btn-create" style="margin-top: 20px;">Guardar Producto (y Receta) y Reintentar</button>
         </div>
     </div>
 

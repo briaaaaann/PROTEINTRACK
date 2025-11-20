@@ -12,7 +12,7 @@
         .toolbar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-end; }
         button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
         .btn-new { background-color: #5cb85c; }
-        .btn-delete { background-color: #d9534f; padding: 5px 10px; font-size: 14px; margin-left: 5px; }
+        .btn-delete { background-color: #d9534f; padding: 5px 0; font-size: 12px; margin-left: 5px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
@@ -29,8 +29,22 @@
         input, select { width: 100%; padding: 8px; box-sizing: border-box; }
 
         .ingredientes-table td { padding: 5px; border: none; }
-        .btn-add-ing { background-color: #337ab7; font-size: 0.9em; margin-top: 10px; }
+        .btn-add-ing { background-color: #337ab7; padding: 5px 0; font-size: 12px; margin-top: 10px; }
         .btn-remove-ing { background-color: #d9534f; color: white; border: none; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+        th.sortable {cursor: pointer; user-select: none; position: relative;}
+        th.sortable:hover { background-color: #e2e6ea; }
+        th.sortable::after { content: ' ↕'; font-size: 0.8em; color: #999; float: right; }
+        .btn-edit, .btn-delete {width: 30px; padding: 5px 0;       
+            font-size: 12px;       
+            border-radius: 4px; border: none; cursor: pointer; color: white;
+            text-align: center; margin-left: 4px;
+        }
+
+        .btn-edit { background-color: #337ab7; }
+        .btn-edit:hover { background-color: #286090; }
+
+        .btn-delete { background-color: #d9534f; }
+        .btn-delete:hover { background-color: #c9302c; }
     </style>
 </head>
 <body>
@@ -45,9 +59,9 @@
         <table id="tabla-recetas">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Producto Final (Resultado)</th>
-                    <th>Nombre de la Receta</th>
+                    <th class="sortable" onclick="ordenarTabla('id_receta')">ID</th>
+                    <th class="sortable" onclick="ordenarTabla('nombre_producto')">Producto Final (Resultado)</th>
+                    <th class="sortable" onclick="ordenarTabla('nombre')">Nombre de la Receta</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -60,8 +74,8 @@
     <div id="modal-receta" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2>Nueva Receta</h2>
-            
+            <h2 id="modal-titulo">Nueva Receta</h2>Nueva Receta</h2>
+            <input type="hidden" id="receta-id">
             <div class="form-group">
                 <label>Producto Final (¿Qué estamos cocinando?):</label>
                 <select id="receta-producto-final"></select>

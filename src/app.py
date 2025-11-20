@@ -267,6 +267,23 @@ def api_crear_receta():
         print(f"ERROR en POST /api/recetas: {e}")
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
 
+@app.route('/api/recetas/<int:id_receta>', methods=['PUT'])
+def api_editar_receta(id_receta):
+    try:
+        datos = request.json
+        exito = recetas.actualizar_receta(
+            id_receta=id_receta,
+            id_producto_final=int(datos['id_producto_final']),
+            nombre=datos['nombre'],
+            ingredientes=datos['ingredientes']
+        )
+        if exito:
+            return jsonify({"mensaje": "Receta actualizada"}), 200
+        else:
+            return jsonify({"error": "No se pudo actualizar"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/recetas/<int:id_receta>', methods=['DELETE'])
 def api_eliminar_receta(id_receta):
     print(f"Recibida petición DELETE en /api/recetas/{id_receta}")
