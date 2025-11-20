@@ -69,6 +69,28 @@ def obtener_receta_por_producto(id_producto_final: int):
         receta['ingredientes'] = cur.fetchall()
         return receta
 
+def actualizar_receta(id_receta: int, id_producto_final: int, nombre: str, ingredientes: list):
+    with get_cursor(commit=True) as cur:
+        cur.execute("""
+            UPDATE recetas 
+            SET nombre = %s, id_producto_final = %s
+            WHERE id_receta = %s
+        """, (nombre, id_producto_final, id_receta))
+
+        cur.execute("DELETE FROM detalle_receta WHERE id_receta = %s", (id_receta,))
+        if ingredientes:
+            query_ingredientes = """
+                INSERT INTO detalle_receta (id_receta, id_insumo, cantidad_estimada, unidad)
+                VALUES (%s, %s, %s, %s)
+            """
+            datos_ingredientes = [
+                (id_receta, ing['id_insumo'], ing['cantidad'], ing['unidad_id'])
+                for ing in ingredientes
+            ]
+            cur.executemany(query_ingredientes, datos_ingredientes)
+            
+        return True
+
 def obtener_todas_las_recetas_con_producto():
     with get_cursor() as cur:
         cur.execute(

@@ -66,6 +66,47 @@ function filtrarTabla() {
     renderizarTabla(filtrados);
 }
 
+let ordenActual = {
+    columna: null,
+    ascendente: true
+};
+
+function ordenarTabla(columna) {
+    if (ordenActual.columna === columna) {
+        ordenActual.ascendente = !ordenActual.ascendente;
+    } else {
+        ordenActual.columna = columna;
+        ordenActual.ascendente = true; 
+    }
+
+    const factor = ordenActual.ascendente ? 1 : -1;
+
+    todosLosProductos.sort((a, b) => {
+        let valA = a[columna];
+        let valB = b[columna];
+
+        if (valA == null) valA = "";
+        if (valB == null) valB = "";
+        if (columna === 'stock_convertido' || columna === 'id_producto') {
+            valA = parseFloat(valA);
+            valB = parseFloat(valB);
+            return (valA - valB) * factor;
+        }
+
+        if (typeof valA === 'string') {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+            if (valA < valB) return -1 * factor;
+            if (valA > valB) return 1 * factor;
+            return 0;
+        }
+
+        return (valA < valB ? -1 : 1) * factor;
+    });
+
+    renderizarTabla(todosLosProductos);
+}
+
 const modal = document.getElementById("modal-producto");
 
 function cerrarModal() { modal.style.display = "none"; }

@@ -20,6 +20,9 @@
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f8f9fa; color: #333; }
         tr:hover { background-color: #f1f1f1; }
+        th.sortable {cursor: pointer; user-select: none; position: relative;}
+        th.sortable:hover {background-color: #e2e6ea;}
+        th.sortable::after {content: ' ↕'; font-size: 0.8em; color: #999; float: right;}
 
         .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; color: white; margin-right: 3px; }
         .badge-prod { background-color: #5bc0de; } 
@@ -48,11 +51,11 @@
         <table id="tabla-productos">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Familia</th>
-                    <th>Unidad</th>
-                    <th>Stock</th>
+                    <th class="sortable" onclick="ordenarTabla('id_producto')">ID</th>
+                    <th class="sortable" onclick="ordenarTabla('nombre')">Nombre</th>
+                    <th class="sortable" onclick="ordenarTabla('familia_nombre')">Familia</th>
+                    <th class="sortable" onclick="ordenarTabla('unidad_nombre')">Unidad</th>
+                    <th class="sortable" onclick="ordenarTabla('stock_convertido')">Stock</th>
                     <th>Tipo</th> <th>Acciones</th>
                 </tr>
             </thead>
