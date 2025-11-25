@@ -186,15 +186,12 @@ def api_desactivar_producto(id_producto):
 
 @app.route('/api/upload-ventas', methods=['POST'])
 def api_upload_ventas_excel():
-
-    print("Recibida petición POST en /api/upload-ventas")
-    
     if 'file' not in request.files:
         return jsonify({"exito": False, "error": "No se encontró la parte del archivo ('file')"}), 400
     
     file = request.files['file']
-    
     fila_inicio = int(request.form.get('fila_inicio', 1))
+    fecha_venta_str = request.form.get('fecha_venta') 
     
     if file.filename == '':
         return jsonify({"exito": False, "error": "No se seleccionó ningún archivo"}), 400
@@ -203,25 +200,20 @@ def api_upload_ventas_excel():
         try:
             filename = secure_filename(file.filename)
             ruta_guardada = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
+            
             if fila_inicio == 1:
                 file.save(ruta_guardada)
-                print(f"Archivo guardado temporalmente en: {ruta_guardada}")
-            else:
-                print(f"Reintentando procesamiento del archivo: {ruta_guardada}")
-
-            resultado = logica_negocio.procesar_ventas_excel(ruta_guardada, fila_inicio)
-
+            
+            resultado = logica_negocio.procesar_ventas_excel(ruta_guardada, fila_inicio, fecha_venta_str)
+            
             if resultado["exito"]:
                 os.remove(ruta_guardada)
-                print(f"Archivo temporal eliminado: {ruta_guardada}")
 
             return jsonify(resultado), 200 
 
         except Exception as e:
-            print(f"ERROR en /api/upload-ventas: {str(e)}")
-            return jsonify({"exito": False, "error": f"Error interno del servidor al procesar archivo: {str(e)}"}), 500
-
+            return jsonify({"exito": False, "error": f"Error interno: {str(e)}"}), 500
+        
 @app.route('/api/recetas', methods=['GET'])
 def api_get_todas_las_recetas():
     print("Recibida petición GET en /api/recetas")

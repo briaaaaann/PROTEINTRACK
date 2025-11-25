@@ -1,14 +1,16 @@
 import pandas as pd 
 from decimal import Decimal
+from datetime import date
 from . import productos
 from . import recetas
 from . import produccion
-from . import ventas
+from . import ventas  
 from . import movimientos_inventario
 from . import unidades_medida
 
-def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: float, descuento: float = 0):
-
+def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: float, descuento: float = 0, fecha_personalizada=None):
+    fecha_final = fecha_personalizada if fecha_personalizada else date.today()
+    
     try:
         cantidad_decimal = Decimal(str(cantidad))
         precio_decimal = Decimal(str(precio_unitario))
@@ -16,6 +18,17 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         producto_info = productos.obtener_producto_por_id(id_producto)
         if not producto_info:
             raise Exception(f"Producto ID {id_producto} no encontrado.")
+        id_nueva_venta = ventas.registrar_venta(
+            id_producto, 
+            cantidad_decimal, 
+            precio_decimal, 
+            descuento_decimal,
+            fecha_final 
+        )
+        
+        if not id_nueva_venta:
+            raise Exception("No se pudo registrar la venta en la tabla 'ventas'.")
+
         if producto_info['es_producido']:
             print(f"ℹ️ Producto producido detectado (ID: {id_producto}). Verificando receta...")
             
@@ -33,20 +46,16 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
             print(f"ℹ️ Producto simple detectado (ID: {id_producto}). Actualizando stock...")
             if not productos.actualizar_stock(id_producto, -cantidad_decimal):
                 raise Exception(f"No se pudo actualizar el stock del producto simple {id_producto}.")
-
-        nueva_venta = ventas.registrar_venta(id_producto, cantidad_decimal, precio_decimal, descuento_decimal)
-        if not nueva_venta:
-            raise Exception("No se pudo registrar la venta en la tabla 'ventas'.")
         
-        print(f"✅ Venta registrada con ID: {nueva_venta['id_venta']} y stock/insumos actualizados.")
+        print(f"✅ Venta registrada con ID: {id_nueva_venta} (Fecha: {fecha_final}) y stock actualizado.")
         return True
         
     except Exception as e:
         print(f"❌ Error en registrar_venta_logica: {e}")
         return False
     
-def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1):
-    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Empezando en fila {fila_inicio})")
+def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1, fecha_venta_str: str = None):
+    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Fecha: {fecha_venta_str})")
     try:
         df = pd.read_excel(ruta_archivo, header=4, dtype={'CLAVE': str}) 
         df = df.dropna(subset=['CLAVE'])
@@ -74,15 +83,14 @@ def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1):
                 id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
                 
                 if id_prod:
-                    print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}' (CLAVE: {clave_sr}, ID: {id_prod})...")
-                    if registrar_venta_logica(id_prod, cantidad, precio, descuento):
+                    print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}'...")
+                    if registrar_venta_logica(id_prod, cantidad, precio, descuento, fecha_venta_str):
                         exitos += 1
                     else:
                         fallos += 1
                 
                 else:
-
-                    print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}' ('{nombre_prod_log}').")
+                    print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}'")
                     return {
                         "exito": False,
                         "error": "Producto no encontrado",
@@ -93,16 +101,9 @@ def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1):
                         "familia_grupo": row.get('GRUPO', 'N/A')
                     }
 
-            except KeyError as e:
-                print(f"❌ ERROR Fila {fila_log}: Falta la columna {e} en el Excel. Venta omitida.")
-                fallos += 1
             except Exception as e:
-                print(f"❌ ERROR Fila {fila_log} ('{row.get('DESCRIPCION', 'N/A')}'): No se pudo procesar. Detalle: {e}")
+                print(f"❌ ERROR Fila {fila_log}: {e}")
                 fallos += 1
-        
-        print("\n--- 📊 Resumen de Carga API ---")
-        print(f"✅ Ventas procesadas con éxito: {exitos}")
-        print(f"❌ Ventas con errores (omitidas): {fallos}")
         
         return {
             "exito": True,
@@ -112,7 +113,7 @@ def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1):
         }
 
     except Exception as e:
-        return {"exito": False, "error": f"ERROR crítico al leer el archivo Excel: {str(e)}"}
+        return {"exito": False, "error": f"ERROR crítico al leer Excel: {str(e)}"}
 
 def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
     try:

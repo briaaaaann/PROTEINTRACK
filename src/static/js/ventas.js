@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     
     const API_URL = "";
-
     const fileInput = document.getElementById("file-input");
     const uploadBtn = document.getElementById("upload-btn");
     const mensajeDiv = document.getElementById("mensaje");
+    const fechaInput = document.getElementById("fecha-venta-input");
     const crearProductoContainer = document.getElementById("crear-producto-container");
     const errorDetalle = document.getElementById("error-detalle");
     const claveInput = document.getElementById("clave-input");
@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let totalVentasProcesadas = 0;
     let insumosList = []; 
     let unidadesList = [];
+
+    if(fechaInput) {
+        fechaInput.valueAsDate = new Date();
+    }
 
     async function loadDropdowns() {
         try {
@@ -65,11 +69,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
         }
+        const fechaSeleccionada = fechaInput.value;
+        if (!fechaSeleccionada) {
+             mostrarMensaje("Por favor, seleccione la fecha de las ventas", "error");
+             return;
+        }
 
         const formData = new FormData();
         formData.append("file", archivoExcel);
         formData.append("fila_inicio", fila_inicio);
-
+        formData.append("fecha_venta", fechaSeleccionada);
         mostrarMensaje(`Cargando y procesando archivo (desde fila ${fila_inicio})...`, "info");
         uploadBtn.disabled = true;
 
