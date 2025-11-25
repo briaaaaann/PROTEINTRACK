@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    const API_URL = "http://192.168.1.130:5000";
+    const API_URL = "";
     const productoSelect = document.getElementById("producto-select");
     const unidadSelect = document.getElementById("unidad-select");
     const cantidadInput = document.getElementById("cantidad-input");
@@ -8,18 +8,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const mensajeDiv = document.getElementById("mensaje");
 
     let listaProductos = [];
+    let ultimoClick = 0; 
 
     async function cargarProductos() {
         try {
-            const response = await fetch(`${API_URL}/api/productos`); 
-            if (!response.ok) {
-                throw new Error("No se pudieron cargar los productos");
-            }
+            if(listaProductos.length > 0) return;
+
+            const response = await fetch(`${API_URL}/api/productos`);
+            if (!response.ok) throw new Error("No se pudieron cargar los productos");
+            
             listaProductos = await response.json();
             productoSelect.innerHTML = "<option value=''>Seleccione un producto...</option>";
             
             listaProductos.forEach(producto => {
-                
                 if (producto.es_registrable_produccion) {
                     const option = document.createElement("option");
                     option.value = producto.id_producto;
@@ -39,25 +40,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function actualizarUnidadPorDefecto() {
         const productoSeleccionado = productoSelect.options[productoSelect.selectedIndex];
-        if (!productoSeleccionado.value) {
-            unidadSelect.innerHTML = "<option value=''>Cargando unidades...</option>";
+        if (!productoSeleccionado || !productoSeleccionado.value) {
+            unidadSelect.innerHTML = "<option value=''>...</option>";
             return;
         }
         const unidadId = productoSeleccionado.getAttribute('data-unidad-id');
         const unidadNombre = productoSeleccionado.getAttribute('data-unidad-nombre');
         unidadSelect.innerHTML = `<option value="${unidadId}">${unidadNombre}</option>`;
     }
+    async function registrarProduccion(e) {
+        if(e) e.preventDefault();
+        if(e) e.stopPropagation(); 
+        const ahora = Date.now();
+        if (ahora - ultimoClick < 2000) {
+            console.warn("🚫 Doble clic bloqueado por JS.");
+            return; 
+        }
+        ultimoClick = ahora;
 
-    async function registrarProduccion() {
         const id_producto = productoSelect.value;
         const unidad_id = unidadSelect.value;
         const cantidad = cantidadInput.value;
-        const unidad_nombre = unidadSelect.options[unidadSelect.selectedIndex].text;
-
+        
         if (!id_producto || !unidad_id || !cantidad) {
-            mostrarMensaje("Por favor, complete todos los campos", "error");
+            mostrarMensaje("Complete todos los campos", "error");
             return;
         }
+
+        const optionSelected = productoSelect.options[productoSelect.selectedIndex];
+        const unidad_nombre = optionSelected ? optionSelected.getAttribute('data-unidad-nombre') : '';
+        guardarBtn.disabled = true;
+        guardarBtn.textContent = "Guardando...";
 
         const datosProduccion = {
             id_producto: parseInt(id_producto),
@@ -75,35 +88,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const resultado = await response.json();
 
-            if (!response.ok) {
-                throw new Error(resultado.error || "Error desconocido");
-            }
+            if (!response.ok) throw new Error(resultado.error || "Error desconocido");
             
             mostrarMensaje(resultado.mensaje, "exito");
             cantidadInput.value = "";
+            listaProductos = []; 
             cargarProductos(); 
 
         } catch (error) {
-            console.error("Error al registrar producción:", error);
+            console.error(error);
             mostrarMensaje(`Error: ${error.message}`, "error");
+        } finally {
+            guardarBtn.disabled = false;
+            guardarBtn.textContent = "Registrar Producción";
         }
     }
 
     function mostrarMensaje(texto, tipo) {
         mensajeDiv.textContent = texto;
-        if (tipo === "exito") {
-            mensajeDiv.className = "mensaje-exito";
-        } else {
-            mensajeDiv.className = "mensaje-error";
-        }
+        mensajeDiv.className = (tipo === "exito") ? "mensaje-exito" : "mensaje-error";
         setTimeout(() => {
             mensajeDiv.textContent = "";
             mensajeDiv.className = "";
         }, 3000);
     }
-
-    guardarBtn.addEventListener("click", registrarProduccion);
-    productoSelect.addEventListener("change", actualizarUnidadPorDefecto);
+    guardarBtn.onclick = registrarProduccion;
+    productoSelect.onchange = actualizarUnidadPorDefecto;
     cargarProductos();
-    actualizarUnidadPorDefecto();
 });
