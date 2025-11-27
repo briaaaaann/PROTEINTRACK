@@ -333,6 +333,10 @@ def pagina_gestion_productos():
 def pagina_gestion_recetas():
     return render_template('recetas.html')
 
+@app.route('/inventario-actual')
+def pagina_inventario_actual():
+    return render_template('inventario_actual.html')
+
 def main():
     print("🚀 Iniciando servidor Flask en http://192.168.1.130:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)

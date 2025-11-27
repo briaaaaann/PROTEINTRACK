@@ -36,11 +36,16 @@
         .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
         .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .checkbox-group input { width: auto; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div class="header-actions">
+            <a href="/" class="btn-back">⬅ Volver al Menú</a>
+        </div>
         <h1>📦 Catálogo de Productos</h1>
         
         <div class="toolbar">
@@ -62,8 +67,6 @@
             <tbody id="tabla-body">
                 </tbody>
         </table>
-
-        <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
     </div>
 
     <div id="modal-producto" class="modal">
