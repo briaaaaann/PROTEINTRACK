@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario en Tiempo Real - ProteinTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 900px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 20px; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
+        .search-box { padding: 8px; width: 60%; border: 1px solid #ccc; border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #6f42c1; color: white; } 
+        tr:hover { background-color: #f5f5f5; }
+        
+        .stock-positivo { color: green; font-weight: bold; }
+        .stock-bajo { color: #e67e22; font-weight: bold; }
+        .stock-negativo { color: #d9534f; font-weight: bold; }
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        th.sortable:hover { background-color: #5a32a3; } 
+        th.sortable::after { content: ' ↕'; font-size: 0.8em; color: #ddd; float: right; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-actions">
+            <a href="/" class="btn-back">⬅ Volver al Menú</a>
+            <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar producto...">
+        </div>
+
+        <h1>📦 Inventario en Tiempo Real</h1>
+        <p style="text-align: center; color: #666; font-size: 0.9em;">Stock disponible al momento exacto de la consulta.</p>
+
+        <table id="tabla-inventario">
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="ordenarTabla('nombre')">Producto</th>
+                    <th class="sortable" onclick="ordenarTabla('stock_convertido')">Stock Actual</th>
+                    <th class="sortable" onclick="ordenarTabla('unidad_nombre')">Unidad</th>
+                    <th class="sortable" onclick="ordenarTabla('familia_nombre')">Familia</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body">
+                <tr><td colspan="4" style="text-align:center">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = ""; 
+        let todosLosProductos = [];
+        let ordenActual = {
+            columna: 'nombre', 
+            ascendente: true
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            cargarInventario();
+            document.getElementById("buscador").addEventListener("keyup", aplicarFiltrosYRenderizar);
+        });
+
+        async function cargarInventario() {
+            try {
+                const res = await fetch(`${API_URL}/api/productos`);
+                const datos = await res.json();
+                todosLosProductos = datos.filter(p => p.activo && p.es_registrable_produccion);
+                ordenarTabla('nombre', true); 
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById("tabla-body").innerHTML = "<tr><td colspan='4'>Error al cargar inventario.</td></tr>";
+            }
+        }
+        function aplicarFiltrosYRenderizar() {
+            const texto = document.getElementById("buscador").value.toLowerCase();
+            
+            const filtrados = todosLosProductos.filter(p => 
+                p.nombre.toLowerCase().includes(texto) || 
+                (p.familia_nombre && p.familia_nombre.toLowerCase().includes(texto))
+            );
+            
+            renderizarTabla(filtrados);
+        }
+
+        function ordenarTabla(columna, forzarAscendente = false) {
+            if (!forzarAscendente && ordenActual.columna === columna) {
+                ordenActual.ascendente = !ordenActual.ascendente;
+            } else {
+                ordenActual.columna = columna;
+                ordenActual.ascendente = true;
+            }
+
+            const factor = ordenActual.ascendente ? 1 : -1;
+            todosLosProductos.sort((a, b) => {
+                let valA = a[columna];
+                let valB = b[columna];
+
+                if (valA == null) valA = "";
+                if (valB == null) valB = "";
+                if (columna === 'stock_convertido') {
+                    return (parseFloat(valA) - parseFloat(valB)) * factor;
+                }
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                    if (valA < valB) return -1 * factor;
+                    if (valA > valB) return 1 * factor;
+                    return 0;
+                }
+                
+                return 0;
+            });
+            aplicarFiltrosYRenderizar();
+        }
+
+        function renderizarTabla(lista) {
+            const tbody = document.getElementById("tabla-body");
+            tbody.innerHTML = "";
+
+            if (lista.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No se encontraron productos.</td></tr>";
+                return;
+            }
+            
+            lista.forEach(p => {
+                let claseStock = "stock-positivo";
+                const stockVal = parseFloat(p.stock_convertido);
+                if (stockVal <= 0) claseStock = "stock-negativo";
+                else if (stockVal < 5) claseStock = "stock-bajo"; 
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${p.nombre}</strong></td>
+                    <td class="${claseStock}">${stockVal.toFixed(3)}</td>
+                    <td>${p.unidad_nombre}</td>
+                    <td style="color: #777; font-size: 0.9em;">${p.familia_nombre || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

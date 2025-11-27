@@ -23,11 +23,16 @@
         #mensaje { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
         .mensaje-exito { background-color: #dff0d8; color: #3c763d; }
         .mensaje-error { background-color: #f2dede; color: #a94442; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div class="header-actions">
+            <a href="/" class="btn-back">⬅ Volver al Menú</a>
+        </div>
         <h1>Registrar Producción 🍳</h1> <div class="form-group">
             <label for="producto-select">Producto:</label>
             <select id="producto-select">
@@ -48,7 +53,6 @@
         </div>
 
         <button id="guardar-btn" type="button">Registrar Producción</button> <div id="mensaje"></div>
-                    <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
                 </div> <script src="/static/js/produccion.js?v=99"></script>
             </body>
     </div>

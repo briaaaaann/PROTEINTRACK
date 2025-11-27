@@ -32,11 +32,16 @@
             border-radius: 8px;
             background-color: #fafafa;
         }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div class="header-actions">
+            <a href="/" class="btn-back">⬅ Volver al Menú</a>
+        </div>
         <h1>Cargar Ventas 📂</h1>
         <div class="form-group">
             <label for="file-input">Seleccionar archivo Excel (.xls, .xlsx):</label>
@@ -49,7 +54,7 @@
         </div>
         
         <button id="upload-btn" class="btn-upload">Cargar Archivo</button>
-        <div id="mensaje"></div> <a href="/" style="display: block; text-align: center; margin-top: 20px;">↩️ Volver al Menú</a>
+        <div id="mensaje"></div> 
         <hr>
 
         <div id="crear-producto-container">
