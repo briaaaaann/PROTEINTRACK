@@ -77,7 +77,8 @@ def api_registrar_produccion_simple():
             id_producto=int(datos['id_producto']),
             cantidad=float(datos['cantidad']),
             unidad_id=int(datos['unidad_id']),
-            unidad_nombre=datos.get('unidad_nombre', 'unidades') 
+            unidad_nombre=datos.get('unidad_nombre', 'unidades'),
+            fecha_personalizada=datos.get('fecha')
         )
 
         if exito:
@@ -102,7 +103,8 @@ def api_registrar_merma():
             id_producto=int(datos['id_producto']), 
             cantidad=float(datos['cantidad']),
             unidad_id=int(datos['unidad_id']),
-            observaciones=datos.get('observaciones', None)
+            observaciones=datos.get('observaciones', None),
+            fecha_personalizada=datos.get('fecha')
         )
         if exito:
             return jsonify({"mensaje": "Merma registrada con éxito"}), 201

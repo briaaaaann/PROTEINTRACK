@@ -55,6 +55,14 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         return False
     
 def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1, fecha_venta_str: str = None):
+    fecha_final = fecha_venta_str if fecha_venta_str else date.today()
+
+    if ventas.verificar_existencia_ventas_fecha(fecha_final):
+        return {
+            "exito": False, 
+            "error": f"Verifica la fecha: Ya existen ventas registradas para el día {fecha_final}."
+        }
+    
     print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Fecha: {fecha_venta_str})")
     try:
         df = pd.read_excel(ruta_archivo, header=4, dtype={'CLAVE': str}) 
@@ -133,7 +141,7 @@ def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
         print(f"❌ Error en registrar_compra_logica: {e}")
         return False
 
-def registrar_merma_logica(id_producto: int, cantidad: float, unidad_id: int, observaciones: str):
+def registrar_merma_logica(id_producto: int, cantidad: float, unidad_id: int, observaciones: str, fecha_personalizada=None):
     try:
         factor = unidades_medida.obtener_factor_base(unidad_id)
         if factor is None:
@@ -142,7 +150,7 @@ def registrar_merma_logica(id_producto: int, cantidad: float, unidad_id: int, ob
         factor_decimal = Decimal(factor)
         cantidad_base = cantidad_decimal * factor_decimal
         nuevo_mov = movimientos_inventario.registrar_movimiento(
-            id_producto, 'Merma', cantidad_decimal, unidad_id, observaciones
+            id_producto, 'Merma', cantidad_decimal, unidad_id, observaciones, fecha=fecha_personalizada
         )
         if not nuevo_mov:
             raise Exception("No se pudo registrar el movimiento de merma.")
@@ -192,7 +200,7 @@ def registrar_produccion_de_platillo(id_producto_final: int, cantidad_producida:
         print("ℹ️ Es posible que el inventario esté en un estado inconsistente. Se requiere revisión manual.")
         return False
 
-def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, unidad_nombre: str = 'unidades', observaciones: str = "Producción interna"):
+def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: int, unidad_nombre: str = 'unidades', observaciones: str = "Producción interna", fecha_personalizada=None):
     try:
         factor = unidades_medida.obtener_factor_base(unidad_id)
         if factor is None:
@@ -214,7 +222,7 @@ def registrar_produccion_simple(id_producto: int, cantidad: float, unidad_id: in
             print("ℹ️ No se encontró receta para este producto. Solo se sumará al stock.")
         if not productos.actualizar_stock(id_producto, cantidad_base):
             raise Exception("No se pudo actualizar el stock del producto final.")
-        produccion.registrar_produccion(id_producto, cantidad_decimal, unidad_id, observaciones)
+        produccion.registrar_produccion(id_producto, cantidad_decimal, unidad_id, observaciones, fecha=fecha_personalizada)
         print(f"✅ Producción simple registrada. Stock de [ID: {id_producto}] aumentado en {cantidad_base} unidades base (equivale a {cantidad_decimal} {unidad_nombre}).")
         return True
         

@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const cantidadInput = document.getElementById("cantidad-input");
     const guardarBtn = document.getElementById("guardar-btn");
     const mensajeDiv = document.getElementById("mensaje");
+    const fechaInput = document.getElementById("fecha-input");
+    if(fechaInput) {
+        fechaInput.valueAsDate = new Date();
+    }
 
     let listaProductos = [];
     let ultimoClick = 0; 
@@ -76,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
             id_producto: parseInt(id_producto),
             unidad_id: parseInt(unidad_id),
             cantidad: parseFloat(cantidad),
-            unidad_nombre: unidad_nombre
+            unidad_nombre: unidad_nombre,
+            fecha: fechaInput.value
         };
 
         try {

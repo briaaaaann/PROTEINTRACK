@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const obsInput = document.getElementById("obs-input");
     const guardarBtn = document.getElementById("guardar-btn");
     const mensajeDiv = document.getElementById("mensaje");
+    const fechaInput = document.getElementById("fecha-input");
+    if(fechaInput) {
+        fechaInput.valueAsDate = new Date();
+    }
 
     let listaProductos = []; 
 
@@ -93,7 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
             id_producto: parseInt(id_producto),
             unidad_id: parseInt(unidad_id),
             cantidad: parseFloat(cantidad),
-            observaciones: observaciones
+            observaciones: observaciones,
+            fecha: fechaInput.value
         };
 
         try {
