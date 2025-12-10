@@ -28,3 +28,8 @@ def obtener_ventas_por_fecha(fecha_inicio: date, fecha_fin: date):
             (fecha_inicio, fecha_fin)
         )
         return cur.fetchall()
+    
+def verificar_existencia_ventas_fecha(fecha_consulta):
+    with get_cursor() as cur:
+        cur.execute("SELECT 1 FROM ventas WHERE fecha = %s LIMIT 1;", (fecha_consulta,))
+        return cur.fetchone() is not None

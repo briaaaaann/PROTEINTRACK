@@ -1,15 +1,16 @@
 from .conexion import get_cursor
 from datetime import date
 
-def registrar_produccion(id_producto: int, cantidad: float, unidad_id: int, observaciones: str = None):
+def registrar_produccion(id_producto: int, cantidad: float, unidad_id: int, observaciones: str = None, fecha: date = None):
+    fecha_final = fecha if fecha else date.today()
     with get_cursor(commit=True) as cur:
         cur.execute(
             """
-            INSERT INTO produccion (id_producto, cantidad, unidad, observaciones)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO produccion (id_producto, cantidad, unidad, observaciones, fecha)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING id_produccion;
             """,
-            (id_producto, cantidad, unidad_id, observaciones)
+            (id_producto, cantidad, unidad_id, observaciones, fecha_final)
         )
         return cur.fetchone()
 
