@@ -7,15 +7,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* --- ESTILOS VISUALES --- */
         :root {
-            --primary: #2c3e50;
-            --accent: #34495e; 
+            --primary: #34495e; /* SLATE GREY - PRODUCTOS */
+            --accent: #2c3e50;
             --bg: #f0f2f5;
             --card-bg: #ffffff;
             --text: #333;
-            --border: #dfe6e9;
-            --success: #27ae60;
-            --info: #2980b9;
+            --border: #ddd;
         }
 
         body {
@@ -29,10 +28,11 @@
 
         .main-container {
             width: 100%;
-            max-width: 1100px; 
+            max-width: 1100px;
             margin: 0 auto;
         }
 
+        /* Botón Volver */
         .btn-back {
             display: inline-flex;
             align-items: center;
@@ -43,14 +43,15 @@
             margin-bottom: 20px;
             transition: color 0.3s;
         }
-        .btn-back:hover { color: var(--accent); }
+        .btn-back:hover { color: var(--primary); }
 
+        /* Tarjeta Principal */
         .content-card {
             background-color: var(--card-bg);
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border-top: 5px solid var(--accent);
+            border-top: 5px solid var(--primary);
         }
 
         .header-section {
@@ -62,18 +63,20 @@
             gap: 20px;
         }
         
-        .header-title h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+        .header-title h1 { margin: 0; font-size: 1.8rem; color: var(--primary); }
         .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95rem; }
 
+        /* --- TOOLBAR --- */
         .toolbar {
             display: flex;
             gap: 15px;
             background-color: #f8f9fa;
             padding: 15px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            align-items: center;
+            border: 1px solid #e9ecef;
             flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         .search-wrapper {
@@ -84,135 +87,115 @@
         .search-wrapper i {
             position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #95a5a6;
         }
-        .form-control-search {
-            width: 100%; padding: 12px 12px 12px 35px;
+        .form-control {
+            width: 100%; padding: 10px 10px 10px 35px;
             border: 1px solid #ced4da; border-radius: 8px; font-size: 0.95rem;
             box-sizing: border-box;
         }
-        .form-control-search:focus { outline: none; border-color: var(--accent); }
 
-        .btn-new {
-            background-color: var(--success);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 8px;
-            transition: transform 0.2s;
+        /* Botones Toolbar */
+        .btn-toolbar {
+            padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;
+            font-weight: 600; display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s;
         }
-        .btn-new:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(39, 174, 96, 0.2); }
+        .btn-new { background-color: #27ae60; color: white; }
+        .btn-new:hover { background-color: #219150; }
 
-        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        thead { background-color: var(--accent); color: white; }
+        .btn-sort { background-color: white; border: 1px solid #ccc; color: #555; }
+        .btn-sort:hover { background-color: #e9ecef; }
+        .btn-sort.active { background-color: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- TABLA --- */
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        
+        thead { background-color: var(--primary); color: white; }
         th { padding: 15px; text-align: left; font-weight: 500; }
+        
         td { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
         tr:hover td { background-color: #f8f9fa; }
 
-        .btn-edit {
-            background-color: var(--info); color: white; border: none;
-            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
-            display: inline-flex; align-items: center; gap: 5px;
+        /* Tags de Configuración */
+        .tag-config {
+            display: inline-block; padding: 3px 8px; border-radius: 4px; 
+            font-size: 0.75rem; margin-right: 4px; font-weight: 700;
         }
-        .btn-edit:hover { background-color: #1a5276; }
+        .tag-vendido { background-color: #d6eaf8; color: #2980b9; } /* Azul */
+        .tag-receta { background-color: #d5f5e3; color: #27ae60; } /* Verde */
+        .tag-registrable { background-color: #fcf3cf; color: #f1c40f; } /* Amarillo */
+
+        /* Acciones */
+        .action-buttons { display: flex; gap: 5px; }
+        .btn-action {
+            width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; color: white; transition: 0.2s;
+        }
+        .btn-edit { background-color: #3498db; }
+        .btn-edit:hover { background-color: #2980b9; }
+        .btn-delete { background-color: #e74c3c; }
+        .btn-delete:hover { background-color: #c0392b; }
+
+        /* --- MODAL --- */
         .modal {
-            display: none; 
-            position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); 
-            backdrop-filter: blur(4px); 
-            justify-content: center; align-items: center;
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px); justify-content: center; align-items: center;
         }
-
         .modal-content {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 16px;
-            width: 90%; max-width: 550px;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-            position: relative;
-            animation: slideUp 0.3s ease-out;
-            max-height: 90vh; overflow-y: auto;
+            background-color: #fff; padding: 25px; border-radius: 12px;
+            width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
-        }
-        .modal-header h2 { margin: 0; color: var(--accent); font-size: 1.5rem; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #aaa; }
         
-        .close-btn {
-            background: none; border: none; font-size: 1.5rem; color: #aaa; cursor: pointer;
-        }
-        .close-btn:hover { color: #c0392b; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--primary); }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary); }
+        .form-control-modal { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
         
-        .form-control {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
-            font-size: 1rem; box-sizing: border-box; background-color: #fbfbfb;
+        .checkbox-group {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+            padding: 10px; border: 1px solid #eee; border-radius: 6px;
         }
-        .form-control:focus { outline: none; border-color: var(--accent); background-color: white; }
-        .config-section {
-            background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;
-            margin-top: 15px;
-        }
-        .config-title { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .checkbox-card {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px; background: white; border: 1px solid #ddd; border-radius: 6px;
-            margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
-        }
-        .checkbox-card:hover { border-color: var(--accent); }
-        .checkbox-card input { transform: scale(1.3); cursor: pointer; }
-        .checkbox-label { font-size: 0.95rem; font-weight: 500; color: #333; }
-        .checkbox-desc { font-size: 0.8rem; color: #7f8c8d; display: block; margin-top: 2px; }
-
         .btn-save {
-            width: 100%; background-color: var(--accent); color: white;
-            padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem;
-            font-weight: 600; cursor: pointer; margin-top: 20px;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
+            width: 100%; padding: 12px; background-color: var(--primary); color: white;
+            border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px;
         }
         .btn-save:hover { background-color: #2c3e50; }
-        .badge-prod { border-left: 4px solid #f39c12; }
-        .badge-venta { border-left: 4px solid #2980b9; }
-        .badge-registro { border-left: 4px solid #27ae60; }
 
     </style>
 </head>
 <body>
 
     <div class="main-container">
-        
         <a href="/" class="btn-back">
             <i class="fas fa-arrow-left"></i> Volver al Menú
         </a>
 
         <div class="content-card">
-            
             <div class="header-section">
                 <div class="header-title">
-                    <h1><i class="fas fa-tags"></i> Gestión de Productos</h1>
-                    <p>Administra el catálogo, recetas y configuraciones</p>
+                    <h1><i class="fas fa-box-open"></i> Gestión de Productos</h1>
+                    <p>Catálogo maestro de insumos y productos finales</p>
                 </div>
             </div>
 
             <div class="toolbar">
                 <div class="search-wrapper">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="buscador" class="form-control-search" placeholder="Buscar por nombre o clave...">
+                    <input type="text" id="buscador" class="form-control" placeholder="Buscar producto...">
                 </div>
-                <button id="btn-nuevo" class="btn-new">
-                    <i class="fas fa-plus-circle"></i> Nuevo Producto
+
+                <button class="btn-toolbar btn-sort" id="btn-sort-az">
+                    <i class="fas fa-sort-alpha-down"></i> A-Z
+                </button>
+                <button class="btn-toolbar btn-sort" id="btn-sort-stock">
+                    <i class="fas fa-sort-numeric-down"></i> Stock
+                </button>
+
+                <button class="btn-toolbar btn-new" id="btn-nuevo" onclick="abrirModalNueva()">
+                    <i class="fas fa-plus"></i> Nuevo Producto
                 </button>
             </div>
 
@@ -221,15 +204,14 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Clave</th>
                             <th>Familia</th>
                             <th>Unidad</th>
-                            <th>Configuración</th>
+                            <th>Stock</th> <th>Configuración</th>
                             <th style="text-align: right;">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-body">
-                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando productos...</td></tr>
+                    <tbody id="tabla-productos">
+                        <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando catálogo...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -238,67 +220,55 @@
 
     <div id="modal-producto" class="modal">
         <div class="modal-content">
-            
             <div class="modal-header">
-                <h2 id="modal-titulo"><i class="fas fa-edit"></i> Producto</h2>
+                <h2 id="modal-titulo" style="margin:0; color: var(--primary);">Nuevo Producto</h2>
                 <button class="close-btn" onclick="cerrarModal()">&times;</button>
             </div>
 
             <input type="hidden" id="prod-id">
-
+            
             <div class="form-group">
                 <label>Nombre del Producto:</label>
-                <input type="text" id="prod-nombre" class="form-control" placeholder="Ej. Hamburguesa Especial">
+                <input type="text" id="prod-nombre" class="form-control-modal">
+            </div>
+            
+            <div class="form-group">
+                <label>Clave SoftRestaurant (Opcional):</label>
+                <input type="text" id="prod-clave" class="form-control-modal">
             </div>
 
             <div class="form-group">
-                <label>Clave (Ticket/SoftRestaurant):</label>
-                <input type="text" id="prod-clave" class="form-control" placeholder="Ej. 10045">
+                <label>Familia:</label>
+                <select id="prod-familia" class="form-control-modal"></select>
             </div>
 
-            <div style="display: flex; gap: 15px;">
-                <div class="form-group" style="flex: 1;">
-                    <label>Familia:</label>
-                    <select id="prod-familia" class="form-control"></select>
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label>Unidad Base:</label>
-                    <select id="prod-unidad" class="form-control"></select>
-                </div>
+            <div class="form-group">
+                <label>Unidad de Medida:</label>
+                <select id="prod-unidad" class="form-control-modal"></select>
             </div>
 
-            <div class="config-section">
-                <div class="config-title">Comportamiento del Producto</div>
+            <div style="margin-top: 20px;">
+                <label style="font-weight:600; color: var(--primary); margin-bottom:10px; display:block;">Configuración:</label>
                 
-                <label class="checkbox-card badge-venta" for="check-vendido">
+                <div class="checkbox-group">
                     <input type="checkbox" id="check-vendido">
-                    <div>
-                        <span class="checkbox-label">Es Vendido (Punto de Venta)</span>
-                        <span class="checkbox-desc">Aparece en los reportes de ventas (Excel)</span>
-                    </div>
-                </label>
-
-                <label class="checkbox-card badge-prod" for="check-producido">
+                    <label for="check-vendido">Es Vendido (Sale en Tickets)</label>
+                </div>
+                
+                <div class="checkbox-group">
                     <input type="checkbox" id="check-producido">
-                    <div>
-                        <span class="checkbox-label">Tiene Receta (Compuesto)</span>
-                        <span class="checkbox-desc">Al venderse, descuenta sus ingredientes</span>
-                    </div>
-                </label>
-
-                <label class="checkbox-card badge-registro" for="check-registrable">
+                    <label for="check-producido">Tiene Receta (Se cocina)</label>
+                </div>
+                
+                <div class="checkbox-group" style="background-color: #fef9e7; border-color: #f1c40f;">
                     <input type="checkbox" id="check-registrable">
-                    <div>
-                        <span class="checkbox-label">Registrar Producción Manual</span>
-                        <span class="checkbox-desc">Aparece en el botón "Producción Simple"</span>
-                    </div>
-                </label>
+                    <label for="check-registrable"><strong>Registrar Producción</strong> (Botón Verde)</label>
+                </div>
             </div>
 
             <button class="btn-save" onclick="guardarProducto()">
                 <i class="fas fa-save"></i> Guardar Cambios
             </button>
-
         </div>
     </div>
 
@@ -306,15 +276,31 @@
     
     <script>
         const modal = document.getElementById("modal-producto");
-        const btnNuevo = document.getElementById("btn-nuevo");
+        
+        // Cerrar al hacer clic fuera
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
         function cerrarModal() {
             modal.style.display = "none";
         }
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                cerrarModal();
-            }
+        
+        // Si tu JS original no tiene esta función, la definimos aquí como puente
+        function abrirModalNueva() {
+            // Intenta limpiar los campos si existen
+            if(document.getElementById("prod-id")) document.getElementById("prod-id").value = "";
+            if(document.getElementById("prod-nombre")) document.getElementById("prod-nombre").value = "";
+            if(document.getElementById("prod-clave")) document.getElementById("prod-clave").value = "";
+            
+            // Cambiar titulo
+            if(document.getElementById("modal-titulo")) document.getElementById("modal-titulo").innerText = "Nuevo Producto";
+            
+            modal.style.display = "flex";
         }
     </script>
+
 </body>
 </html>

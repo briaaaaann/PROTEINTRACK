@@ -307,26 +307,25 @@ def api_get_unidades():
     except Exception as e:
         return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
-@app.route('/historial')
-def pagina_historial():
-    return render_template('historial.html')
+# @app.route('/historial')
+# def pagina_historial():
+#    return render_template('historial.html')
 
-@app.route('/api/historial/generar', methods=['POST'])
-def api_generar_snapshot():
-    try:
-        resultado = historial.generar_snapshot_diario()
-        return jsonify(resultado), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#@app.route('/api/historial/generar', methods=['POST'])
+#def api_generar_snapshot():
+#    try:
+#        resultado = historial.generar_snapshot_diario()
+#        return jsonify(resultado), 201
+#    except Exception as e:
+#        return jsonify({"error": str(e)}), 500
 
-@app.route('/api/historial/<string:fecha>', methods=['GET'])
-def api_ver_historial(fecha):
-    try:
-        datos = historial.obtener_historial_por_fecha(fecha)
-        return jsonify(datos), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+#@app.route('/api/historial/<string:fecha>', methods=['GET'])
+#def api_ver_historial(fecha):
+#    try:
+#        datos = historial.obtener_historial_por_fecha(fecha)
+#        return jsonify(datos), 200
+#    except Exception as e:
+#        return jsonify({"error": str(e)}), 500
 @app.route('/productos')
 def pagina_gestion_productos():
     return render_template('productos.html')

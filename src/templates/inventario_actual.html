@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* --- ESTILOS VISUALES (INTEGRADOS) --- */
         :root {
             --primary: #2c3e50;
-            --accent: #8e44ad; 
+            --accent: #8e44ad; /* MORADO INVENTARIO */
             --bg: #f0f2f5;
             --card-bg: #ffffff;
             --text: #333;
             --border: #ddd;
+            
+            /* Colores de Semáforo */
             --stock-ok: #27ae60;
             --stock-low: #f39c12;
             --stock-crit: #c0392b;
@@ -30,10 +33,11 @@
 
         .main-container {
             width: 100%;
-            max-width: 1000px; 
+            max-width: 1000px; /* Ancho amplio para la tabla */
             margin: 0 auto;
         }
 
+        /* Botón Volver */
         .btn-back {
             display: inline-flex;
             align-items: center;
@@ -46,6 +50,7 @@
         }
         .btn-back:hover { color: var(--accent); }
 
+        /* Tarjeta Principal */
         .content-card {
             background-color: var(--card-bg);
             padding: 30px;
@@ -66,6 +71,7 @@
         .header-title h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
         .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95rem; }
 
+        /* --- BARRA DE HERRAMIENTAS (Filtros y Buscador) --- */
         .toolbar {
             display: flex;
             gap: 15px;
@@ -78,7 +84,7 @@
         }
 
         .search-wrapper {
-            flex-grow: 1; 
+            flex-grow: 1; /* Ocupa el espacio disponible */
             position: relative;
             min-width: 250px;
         }
@@ -86,7 +92,7 @@
             position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #95a5a6;
         }
         .form-control {
-            width: 100%; padding: 10px 10px 10px 35px; 
+            width: 100%; padding: 10px 10px 10px 35px; /* Espacio para icono */
             border: 1px solid #ced4da; border-radius: 8px; font-size: 0.95rem;
             box-sizing: border-box;
         }
@@ -96,6 +102,8 @@
             padding: 10px; border-radius: 8px; border: 1px solid #ced4da;
             background-color: white; color: var(--primary); min-width: 150px;
         }
+
+        /* Botones de Ordenar (Pequeños y elegantes) */
         .sort-btn {
             background-color: white; border: 1px solid #ced4da; color: var(--primary);
             padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
@@ -104,6 +112,7 @@
         .sort-btn:hover { background-color: #e9ecef; color: var(--accent); }
         .sort-btn.active { background-color: var(--accent); color: white; border-color: var(--accent); }
 
+        /* --- TABLA MODERNA --- */
         .table-responsive {
             overflow-x: auto;
             border-radius: 8px;
@@ -119,6 +128,7 @@
         tr:hover td { background-color: #f8f9fa; }
         tr:last-child td { border-bottom: none; }
 
+        /* --- SEMÁFOROS DE STOCK (BADGES) --- */
         .stock-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -129,6 +139,7 @@
             min-width: 60px;
         }
 
+        /* Clases generadas por tu JS, ahora estilizadas */
         .stock-positivo { 
             background-color: rgba(39, 174, 96, 0.15); color: var(--stock-ok); 
         }
@@ -140,6 +151,7 @@
             box-shadow: 0 0 5px rgba(192, 57, 43, 0.2);
         }
 
+        /* Texto pequeño para familia */
         .familia-tag {
             background-color: #ecf0f1; color: #7f8c8d;
             padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;
@@ -160,7 +172,7 @@
             <div class="header-section">
                 <div class="header-title">
                     <h1><i class="fas fa-boxes"></i> Inventario Actual</h1>
-                    <p>Estado en tiempo real de insumos y productos</p>
+                    <p>Visualizando solo productos de <strong>Producción Interna</strong></p>
                 </div>
             </div>
 
@@ -216,18 +228,25 @@
             const btnOrdenStock = document.getElementById("btn-orden-stock");
 
             let inventarioCompleto = [];
-            let criterioOrden = "nombre"; 
+            let criterioOrden = "nombre"; // 'nombre' | 'stock'
 
+            // --- Cargar Datos ---
             async function cargarInventario() {
                 try {
-                    const response = await fetch(`${API_URL}/api/productos`); 
+                    const response = await fetch(`${API_URL}/api/productos`);
                     if (!response.ok) throw new Error("Error al obtener inventario");
                     
                     const productos = await response.json();
+                    
+                    // =========================================================
+                    // 🛑 FILTRO MAESTRO: SOLO PRODUCTOS DE PRODUCCIÓN
+                    // =========================================================
+                    const soloProduccion = productos.filter(p => p.es_registrable_produccion);
 
-                    inventarioCompleto = productos.map(p => ({
+                    // Mapeamos para tener una estructura limpia
+                    inventarioCompleto = soloProduccion.map(p => ({
                         nombre: p.nombre,
-                        stock_convertido: parseFloat(p.stock_convertido || 0), 
+                        stock_convertido: parseFloat(p.stock_convertido || 0),
                         unidad_nombre: p.unidad_nombre || 'u',
                         familia_nombre: p.familia_nombre || 'Sin Familia'
                     }));
@@ -241,6 +260,7 @@
                 }
             }
 
+            // --- Llenar Select de Familias ---
             function llenarFiltroFamilias() {
                 const familias = [...new Set(inventarioCompleto.map(p => p.familia_nombre))].sort();
                 filtroFamilia.innerHTML = "<option value=''>Todas las Familias</option>";
@@ -252,20 +272,24 @@
                 });
             }
 
+            // --- Filtrado y Orden ---
             function aplicarFiltrosYRenderizar() {
                 const texto = buscador.value.toLowerCase();
                 const familiaSel = filtroFamilia.value;
 
+                // 1. Filtrar
                 let listaFiltrada = inventarioCompleto.filter(p => {
                     const coincideTexto = p.nombre.toLowerCase().includes(texto);
                     const coincideFamilia = familiaSel === "" || p.familia_nombre === familiaSel;
                     return coincideTexto && coincideFamilia;
                 });
 
+                // 2. Ordenar
                 listaFiltrada.sort((a, b) => {
                     if (criterioOrden === "stock") {
-                        return a.stock_convertido - b.stock_convertido;
+                        return a.stock_convertido - b.stock_convertido; // Menor a mayor (urgencias)
                     } else {
+                        // Por nombre
                         const valA = a.nombre.toLowerCase();
                         const valB = b.nombre.toLowerCase();
                         if (valA < valB) return -1;
@@ -276,15 +300,18 @@
 
                 renderizarTabla(listaFiltrada);
             }
+
+            // --- Renderizado Visual ---
             function renderizarTabla(lista) {
                 tablaBody.innerHTML = "";
 
                 if (lista.length === 0) {
-                    tablaBody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:#7f8c8d;'>No se encontraron productos coincidente.</td></tr>";
+                    tablaBody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:#7f8c8d;'>No hay productos de producción que coincidan.</td></tr>";
                     return;
                 }
                 
                 lista.forEach(p => {
+                    // Lógica de semáforo
                     let claseStock = "stock-positivo";
                     const stockVal = p.stock_convertido;
                     
@@ -292,7 +319,7 @@
                     else if (stockVal < 5) claseStock = "stock-bajo"; 
 
                     const tr = document.createElement("tr");
-
+                    
                     tr.innerHTML = `
                         <td><strong>${p.nombre}</strong></td>
                         <td><span class="stock-badge ${claseStock}">${stockVal.toFixed(2)}</span></td>
@@ -303,26 +330,25 @@
                 });
             }
 
+            // --- Event Listeners ---
             buscador.addEventListener("input", aplicarFiltrosYRenderizar);
             filtroFamilia.addEventListener("change", aplicarFiltrosYRenderizar);
 
             btnOrdenNombre.addEventListener("click", () => {
                 criterioOrden = "nombre";
-
                 btnOrdenNombre.classList.add("active");
                 btnOrdenStock.classList.remove("active");
-                
                 aplicarFiltrosYRenderizar();
             });
 
             btnOrdenStock.addEventListener("click", () => {
                 criterioOrden = "stock";
-                 btnOrdenStock.classList.add("active");
-                 btnOrdenNombre.classList.remove("active");
-
+                btnOrdenStock.classList.add("active");
+                btnOrdenNombre.classList.remove("active");
                 aplicarFiltrosYRenderizar();
             });
 
+            // Iniciar
             cargarInventario();
         });
     </script>

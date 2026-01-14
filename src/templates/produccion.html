@@ -26,8 +26,8 @@
             </div>
 
             <div class="form-group">
-                <label for="fecha-produccion">Fecha de Producción:</label>
-                <input type="date" id="fecha-produccion" class="form-control">
+                <label for="fecha-input">Fecha de Producción:</label>
+                <input type="date" id="fecha-input" class="form-control">
             </div>
 
             <div class="form-group">
@@ -62,7 +62,7 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const fechaInput = document.getElementById("fecha-produccion");
+            const fechaInput = document.getElementById("fecha-input");
             if(fechaInput && !fechaInput.value) {
                 fechaInput.valueAsDate = new Date();
             }
