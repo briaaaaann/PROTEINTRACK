@@ -4,113 +4,317 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Productos - ProteinTrack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
+        :root {
+            --primary: #2c3e50;
+            --accent: #34495e; 
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #dfe6e9;
+            --success: #27ae60;
+            --info: #2980b9;
+        }
 
-        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: space-between; }
-        input[type="text"] { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-new { background-color: #5cb85c; }
-        .btn-edit { background-color: #337ab7; padding: 5px 0; font-size: 12px; }
-        .btn-delete { background-color: #d9534f; padding: 5px 0; font-size: 12px; margin-left: 5px;}
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            min-height: 100vh;
+        }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; color: #333; }
-        tr:hover { background-color: #f1f1f1; }
-        th.sortable {cursor: pointer; user-select: none; position: relative;}
-        th.sortable:hover {background-color: #e2e6ea;}
-        th.sortable::after {content: ' ↕'; font-size: 0.8em; color: #999; float: right;}
+        .main-container {
+            width: 100%;
+            max-width: 1100px; 
+            margin: 0 auto;
+        }
 
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 0.8em; color: white; margin-right: 3px; }
-        .badge-prod { background-color: #5bc0de; } 
-        .badge-reg { background-color: #f0ad4e; } 
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; width: 500px; border-radius: 8px; max-height: 90vh; overflow-y: auto;}
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close:hover { color: black; }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .btn-back:hover { color: var(--accent); }
+
+        .content-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-title h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+        .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95rem; }
+
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            flex-grow: 1;
+            position: relative;
+            min-width: 250px;
+        }
+        .search-wrapper i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #95a5a6;
+        }
+        .form-control-search {
+            width: 100%; padding: 12px 12px 12px 35px;
+            border: 1px solid #ced4da; border-radius: 8px; font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .form-control-search:focus { outline: none; border-color: var(--accent); }
+
+        .btn-new {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: transform 0.2s;
+        }
+        .btn-new:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(39, 174, 96, 0.2); }
+
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        thead { background-color: var(--accent); color: white; }
+        th { padding: 15px; text-align: left; font-weight: 500; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+        tr:hover td { background-color: #f8f9fa; }
+
+        .btn-edit {
+            background-color: var(--info); color: white; border: none;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-edit:hover { background-color: #1a5276; }
+        .modal {
+            display: none; 
+            position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(4px); 
+            justify-content: center; align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%; max-width: 550px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+        }
+        .modal-header h2 { margin: 0; color: var(--accent); font-size: 1.5rem; }
+        
+        .close-btn {
+            background: none; border: none; font-size: 1.5rem; color: #aaa; cursor: pointer;
+        }
+        .close-btn:hover { color: #c0392b; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .checkbox-group input { width: auto; }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--primary); }
+        
+        .form-control {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 1rem; box-sizing: border-box; background-color: #fbfbfb;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent); background-color: white; }
+        .config-section {
+            background-color: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;
+            margin-top: 15px;
+        }
+        .config-title { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .checkbox-card {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px; background: white; border: 1px solid #ddd; border-radius: 6px;
+            margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .checkbox-card:hover { border-color: var(--accent); }
+        .checkbox-card input { transform: scale(1.3); cursor: pointer; }
+        .checkbox-label { font-size: 0.95rem; font-weight: 500; color: #333; }
+        .checkbox-desc { font-size: 0.8rem; color: #7f8c8d; display: block; margin-top: 2px; }
+
+        .btn-save {
+            width: 100%; background-color: var(--accent); color: white;
+            padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer; margin-top: 20px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn-save:hover { background-color: #2c3e50; }
+        .badge-prod { border-left: 4px solid #f39c12; }
+        .badge-venta { border-left: 4px solid #2980b9; }
+        .badge-registro { border-left: 4px solid #27ae60; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-actions">
-            <a href="/" class="btn-back">⬅ Volver al Menú</a>
-        </div>
-        <h1>📦 Catálogo de Productos</h1>
+    <div class="main-container">
         
-        <div class="toolbar">
-            <input type="text" id="buscador" placeholder="🔍 Buscar por nombre o clave..." onkeyup="filtrarTabla()">
-            <button class="btn-new" onclick="abrirModalNuevo()">+ Nuevo Producto</button>
-        </div>
+        <a href="/" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
 
-        <table id="tabla-productos">
-            <thead>
-                <tr>
-                    <th class="sortable" onclick="ordenarTabla('id_producto')">ID</th>
-                    <th class="sortable" onclick="ordenarTabla('nombre')">Nombre</th>
-                    <th class="sortable" onclick="ordenarTabla('familia_nombre')">Familia</th>
-                    <th class="sortable" onclick="ordenarTabla('unidad_nombre')">Unidad</th>
-                    <th class="sortable" onclick="ordenarTabla('stock_convertido')">Stock</th>
-                    <th>Tipo</th> <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-body">
-                </tbody>
-        </table>
+        <div class="content-card">
+            
+            <div class="header-section">
+                <div class="header-title">
+                    <h1><i class="fas fa-tags"></i> Gestión de Productos</h1>
+                    <p>Administra el catálogo, recetas y configuraciones</p>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="buscador" class="form-control-search" placeholder="Buscar por nombre o clave...">
+                </div>
+                <button id="btn-nuevo" class="btn-new">
+                    <i class="fas fa-plus-circle"></i> Nuevo Producto
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Clave</th>
+                            <th>Familia</th>
+                            <th>Unidad</th>
+                            <th>Configuración</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body">
+                        <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando productos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="modal-producto" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2 id="modal-titulo">Editar Producto</h2>
             
-            <input type="hidden" id="prod-id"> <div class="form-group">
-                <label>Nombre:</label>
-                <input type="text" id="prod-nombre">
-            </div>
-            <div class="form-group">
-                <label>Clave SoftRestaurant:</label>
-                <input type="text" id="prod-clave">
-            </div>
-            <div class="form-group">
-                <label>Familia:</label>
-                <select id="prod-familia"></select>
-            </div>
-            <div class="form-group">
-                <label>Unidad de Medida:</label>
-                <select id="prod-unidad"></select>
+            <div class="modal-header">
+                <h2 id="modal-titulo"><i class="fas fa-edit"></i> Producto</h2>
+                <button class="close-btn" onclick="cerrarModal()">&times;</button>
             </div>
 
-            <hr>
-            <p><strong>Configuración:</strong></p>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="check-vendido" checked>
-                <label for="check-vendido">Es Vendido (Sale en Tickets)</label>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="check-producido">
-                <label for="check-producido">Tiene Receta (Se cocina al venderse)</label>
-            </div>
-            <div class="checkbox-group" style="background-color: #fff3cd; padding: 5px;">
-                <input type="checkbox" id="check-registrable">
-                <label for="check-registrable"><strong>Registrar Producción</strong> (Sale en botón 'Producción Simple')</label>
+            <input type="hidden" id="prod-id">
+
+            <div class="form-group">
+                <label>Nombre del Producto:</label>
+                <input type="text" id="prod-nombre" class="form-control" placeholder="Ej. Hamburguesa Especial">
             </div>
 
-            <button class="btn-new" onclick="guardarProducto()" style="width: 100%; margin-top: 15px;">Guardar Cambios</button>
+            <div class="form-group">
+                <label>Clave (Ticket/SoftRestaurant):</label>
+                <input type="text" id="prod-clave" class="form-control" placeholder="Ej. 10045">
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Familia:</label>
+                    <select id="prod-familia" class="form-control"></select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Unidad Base:</label>
+                    <select id="prod-unidad" class="form-control"></select>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div class="config-title">Comportamiento del Producto</div>
+                
+                <label class="checkbox-card badge-venta" for="check-vendido">
+                    <input type="checkbox" id="check-vendido">
+                    <div>
+                        <span class="checkbox-label">Es Vendido (Punto de Venta)</span>
+                        <span class="checkbox-desc">Aparece en los reportes de ventas (Excel)</span>
+                    </div>
+                </label>
+
+                <label class="checkbox-card badge-prod" for="check-producido">
+                    <input type="checkbox" id="check-producido">
+                    <div>
+                        <span class="checkbox-label">Tiene Receta (Compuesto)</span>
+                        <span class="checkbox-desc">Al venderse, descuenta sus ingredientes</span>
+                    </div>
+                </label>
+
+                <label class="checkbox-card badge-registro" for="check-registrable">
+                    <input type="checkbox" id="check-registrable">
+                    <div>
+                        <span class="checkbox-label">Registrar Producción Manual</span>
+                        <span class="checkbox-desc">Aparece en el botón "Producción Simple"</span>
+                    </div>
+                </label>
+            </div>
+
+            <button class="btn-save" onclick="guardarProducto()">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+
         </div>
     </div>
 
-    <script src="/static/js/productos.js"></script>
+    <script src="{{ url_for('static', filename='js/productos.js') }}"></script>
+    
+    <script>
+        const modal = document.getElementById("modal-producto");
+        const btnNuevo = document.getElementById("btn-nuevo");
+        function cerrarModal() {
+            modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        }
+    </script>
 </body>
 </html>

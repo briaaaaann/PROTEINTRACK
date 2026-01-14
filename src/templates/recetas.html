@@ -4,114 +4,287 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Recetas - ProteinTrack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 1000px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-
-        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: flex-end; }
-        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-new { background-color: #5cb85c; }
-        .btn-delete { background-color: #d9534f; padding: 5px 0; font-size: 12px; margin-left: 5px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; }
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
-        .modal-content { 
-            background-color: #fefefe; margin: 2% auto; padding: 20px; border: 1px solid #888; 
-            width: 700px; border-radius: 8px; max-height: 90vh; overflow-y: auto; 
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400; 
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #ddd;
         }
-        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .btn-back:hover { color: var(--accent); }
+        .content-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
         
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
-
-        .ingredientes-table td { padding: 5px; border: none; }
-        .btn-add-ing { background-color: #337ab7; padding: 5px 0; font-size: 12px; margin-top: 10px; }
-        .btn-remove-ing { background-color: #d9534f; color: white; border: none; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
-        th.sortable {cursor: pointer; user-select: none; position: relative;}
-        th.sortable:hover { background-color: #e2e6ea; }
-        th.sortable::after { content: ' ↕'; font-size: 0.8em; color: #999; float: right; }
-        .btn-edit, .btn-delete {width: 30px; padding: 5px 0;       
-            font-size: 12px;       
-            border-radius: 4px; border: none; cursor: pointer; color: white;
-            text-align: center; margin-left: 4px;
+        .header-title h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+        .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95rem; }
+        .toolbar {
+            display: flex;
+            justify-content: flex-end; 
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
         }
 
-        .btn-edit { background-color: #337ab7; }
-        .btn-edit:hover { background-color: #286090; }
+        .btn-new {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: transform 0.2s;
+            font-size: 1rem;
+        }
+        .btn-new:hover { 
+            background-color: #ba4a00; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(211, 84, 0, 0.2); 
+        }
 
-        .btn-delete { background-color: #d9534f; }
-        .btn-delete:hover { background-color: #c9302c; }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .main-table thead { background-color: #fae5d3; color: var(--accent); } 
+        .main-table th { padding: 15px; text-align: left; font-weight: 700; border-bottom: 2px solid #edbb99; }
+        
+        .main-table td { padding: 15px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+        .main-table tr:hover td { background-color: #fdf2e9; } 
+        .btn-action {
+            padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; margin-right: 5px; color: white;
+        }
+        .btn-edit { background-color: #3498db; }
+        .btn-delete { background-color: #e74c3c; }
+        .modal {
+            display: none; 
+            position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+            justify-content: center; align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            width: 95%; max-width: 700px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            animation: fadeInScale 0.3s ease-out;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+        }
+        .modal-header h2 { margin: 0; color: var(--accent); font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        
+        .close-btn { background: none; border: none; font-size: 1.8rem; color: #aaa; cursor: pointer; }
+        .close-btn:hover { color: #c0392b; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--primary); }
+        
+        .form-control {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+            font-size: 1rem; box-sizing: border-box; background-color: #fff;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent); }
+        .ingredients-wrapper {
+            background-color: #fef9e7; 
+            padding: 20px; border-radius: 10px; border: 1px dashed #f39c12;
+            margin-top: 20px;
+        }
+        
+        .ingredients-wrapper h3 { margin-top: 0; color: #d35400; font-size: 1.1rem; }
+
+        .ingredientes-table { width: 100%; margin-bottom: 15px; }
+        .ingredientes-table th { font-size: 0.85rem; color: #7f8c8d; text-transform: uppercase; padding-bottom: 8px; border-bottom: 1px solid #ebdccb; }
+        .ingredientes-table td { padding: 8px 5px; }
+        .ingredientes-table input, .ingredientes-table select {
+            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;
+            box-sizing: border-box; font-size: 0.9rem;
+        }
+        .ingredientes-table button { 
+            background-color: #e74c3c; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer;
+        }
+
+        .btn-add-ing {
+            background-color: #2ecc71; color: white; border: none; padding: 8px 15px;
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-add-ing:hover { background-color: #27ae60; }
+
+        .btn-save-modal {
+            width: 100%; background-color: var(--accent); color: white;
+            padding: 14px; border: none; border-radius: 8px; font-size: 1.1rem;
+            font-weight: 700; cursor: pointer; margin-top: 25px;
+            transition: background 0.3s;
+        }
+        .btn-save-modal:hover { background-color: #a04000; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-actions">
-            <a href="/" class="btn-back">⬅ Volver al Menú</a>
-        </div>
-        <h1>🍲 Gestión de Recetas</h1>
+    <div class="main-container">
         
-        <div class="toolbar">
-            <button class="btn-new" onclick="abrirModalNueva()">+ Nueva Receta</button>
-        </div>
+        <a href="/" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
 
-        <table id="tabla-recetas">
-            <thead>
-                <tr>
-                    <th class="sortable" onclick="ordenarTabla('id_receta')">ID</th>
-                    <th class="sortable" onclick="ordenarTabla('nombre_producto')">Producto Final (Resultado)</th>
-                    <th class="sortable" onclick="ordenarTabla('nombre')">Nombre de la Receta</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-body"></tbody>
-        </table>
+        <div class="content-card">
+            
+            <div class="header-section">
+                <div class="header-title">
+                    <h1><i class="fas fa-book-open"></i> Libro de Recetas</h1>
+                    <p>Define los ingredientes para el descuento automático</p>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <button class="btn-new" onclick="abrirModalNueva()">
+                    <i class="fas fa-plus"></i> Nueva Receta
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="main-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre de la Receta</th>
+                            <th>Producto Final</th>
+                            <th>Ingredientes</th>
+                            <th style="text-align: right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-recetas">
+                        <tr><td colspan="4" style="text-align:center; padding:20px;">Cargando recetario...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
 
     <div id="modal-receta" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2 id="modal-titulo">Nueva Receta</h2>Nueva Receta</h2>
+            
+            <div class="modal-header">
+                <h2 id="modal-titulo"><i class="fas fa-utensils"></i> Configurar Receta</h2>
+                <button class="close-btn" onclick="cerrarModal()">&times;</button>
+            </div>
+
             <input type="hidden" id="receta-id">
+
             <div class="form-group">
-                <label>Producto Final (¿Qué estamos cocinando?):</label>
-                <select id="receta-producto-final"></select>
-                <small style="color: #666;">Solo aparecen productos marcados como "Producido"</small>
+                <label>Producto Final (¿Qué se cocina?):</label>
+                <select id="receta-producto-final" class="form-control"></select>
+                <small style="color: #e67e22; font-style: italic; margin-top: 4px; display: block;">
+                    <i class="fas fa-info-circle"></i> Solo aparecen productos marcados como "Producido"
+                </small>
             </div>
 
             <div class="form-group">
                 <label>Nombre de la Receta:</label>
-                <input type="text" id="receta-nombre" placeholder="Ej. Receta Waffles 2025">
+                <input type="text" id="receta-nombre" class="form-control" placeholder="Ej. Receta Tacos 2024">
             </div>
 
-            <hr>
-            <h3>Ingredientes</h3>
-            <table class="ingredientes-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50%;">Insumo</th>
-                        <th style="width: 20%;">Cantidad</th>
-                        <th style="width: 20%;">Unidad</th>
-                        <th style="width: 10%;"></th>
-                    </tr>
-                </thead>
-                <tbody id="lista-ingredientes">
-                    </tbody>
-            </table>
-            <button class="btn-add-ing" onclick="agregarFilaIngrediente()">+ Agregar Ingrediente</button>
+            <div class="ingredients-wrapper">
+                <h3><i class="fas fa-carrot"></i> Ingredientes Necesarios</h3>
+                
+                <table class="ingredientes-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%;">Insumo</th>
+                            <th style="width: 20%;">Cantidad</th>
+                            <th style="width: 25%;">Unidad</th>
+                            <th style="width: 10%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-ingredientes">
+                        </tbody>
+                </table>
 
-            <div style="margin-top: 20px; text-align: right;">
-                <button class="btn-new" onclick="guardarReceta()" style="width: 100%;">Guardar Receta</button>
+                <button class="btn-add-ing" onclick="agregarFilaIngrediente()">
+                    <i class="fas fa-plus-circle"></i> Agregar Insumo
+                </button>
             </div>
+
+            <button class="btn-save-modal" onclick="guardarReceta()">
+                <i class="fas fa-save"></i> Guardar en el Libro
+            </button>
+
         </div>
     </div>
 
-    <script src="/static/js/recetas.js"></script>
+    <script src="{{ url_for('static', filename='js/recetas.js') }}"></script>
+    
+    <script>
+        const modal = document.getElementById("modal-receta");
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function cerrarModal() {
+            modal.style.display = "none";
+        }
+    </script>
 </body>
 </html>

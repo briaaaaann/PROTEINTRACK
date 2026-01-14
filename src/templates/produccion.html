@@ -4,62 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Producción - ProteinTrack</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 500px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, input[type="number"] {
-            width: 100%; padding: 10px; border: 1px solid #ccc;
-            border-radius: 4px; box-sizing: border-box;
-        }
-        button {
-            width: 100%; padding: 12px; background-color: #5cb85c; 
-            color: white; border: none; border-radius: 4px;
-            font-size: 16px; cursor: pointer;
-        }
-        button:hover { background-color: #4cae4c; }
-        #mensaje { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
-        .mensaje-exito { background-color: #dff0d8; color: #3c763d; }
-        .mensaje-error { background-color: #f2dede; color: #a94442; }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-actions">
-            <a href="/" class="btn-back">⬅ Volver al Menú</a>
-        </div>
-        <h1>Registrar Producción 🍳</h1> <div class="form-group">
-            <label for="producto-select">Producto:</label>
-            <select id="producto-select">
-                <option value="">Cargando productos...</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="unidad-select">Unidad de Medida:</label>
-            <select id="unidad-select">
-                <option value="">Cargando unidades...</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="cantidad-input">Cantidad:</label>
-            <input type="number" id="cantidad-input" placeholder="Ej. 1.5">
-        </div>
+    <div class="main-container">
         
-        <div class="form-group">
-            <label for="fecha-input">Fecha de Producción:</label>
-            <input type="date" id="fecha-input">
+        <div class="btn-back-container">
+            <a href="/" class="btn-link">
+                <i class="fas fa-arrow-left"></i> Volver al Menú
+            </a>
         </div>
 
-        <button id="guardar-btn" type="button">Registrar Producción</button> <div id="mensaje"></div>
-                </div> <script src="/static/js/produccion.js?v=99"></script>
-            </body>
+        <div class="form-card" style="border-top: 5px solid #27ae60;"> 
+            <div class="header-section" style="margin-bottom: 30px;">
+                <h1 style="font-size: 1.8rem; color:#27ae60;">
+                    <i class="fas fa-blender" style="color: #27ae60;"></i> Producción
+                </h1>
+                <p style="font-size: 0.9rem;">Registra lo que se ha cocinado hoy</p>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha-produccion">Fecha de Producción:</label>
+                <input type="date" id="fecha-produccion" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="producto-select">Producto Cocinado:</label>
+                <select id="producto-select" class="form-control">
+                    <option value="">Cargando productos...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="unidad-select">Unidad de Medida:</label>
+                <select id="unidad-select" class="form-control">
+                    <option value="">Cargando unidades...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="cantidad-input">Cantidad:</label>
+                <input type="number" id="cantidad-input" class="form-control" placeholder="Ej. 10.5" step="0.01">
+            </div>
+
+            <button id="guardar-btn" class="btn btn-success">
+                <i class="fas fa-check"></i> Registrar Producción
+            </button>
+
+            <div id="mensaje" class="alert"></div>
+
+        </div>
     </div>
+
+    <script src="{{ url_for('static', filename='js/produccion.js') }}"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const fechaInput = document.getElementById("fecha-produccion");
+            if(fechaInput && !fechaInput.value) {
+                fechaInput.valueAsDate = new Date();
+            }
+        });
+    </script>
 </body>
 </html>

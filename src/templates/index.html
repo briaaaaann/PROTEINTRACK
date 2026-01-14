@@ -3,80 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProteinTrack - Inicio</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .menu-container {
-            width: 90%;
-            max-width: 600px;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 40px;
-        }
-        .menu-button {
-            display: block;
-            width: 100%;
-            padding: 20px;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            box-sizing: border-box; 
-            transition: transform 0.2s;
-        }
-        .menu-button:hover {
-            transform: scale(1.02);
-        }
-        .btn-produccion { background-color: #5cb85c; } 
-        .btn-merma { background-color: #d9534f; } 
-        .btn-ventas { background-color: #337ab7; } 
-    </style>
+    <title>Dashboard - ProteinTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="menu-container">
-        <h1>🥗 ProteinTrack</h1>
+    <div class="main-container">
         
-        <a href="/produccion" class="menu-button btn-produccion">
-            🍳 Registrar Producción Simple
-        </a>
-        
-        <a href="/merma" class="menu-button btn-merma">
-            🗑️ Registrar Merma
-        </a>
+        <div class="header-section">
+            <h1><i class="fas fa-leaf"></i> ProteinTrack</h1>
+            <p>Sistema de Gestión de Inventario y Producción</p>
+        </div>
 
-        <a href="/ventas" class="menu-button btn-ventas">
-            📂 Cargar Ventas (Excel)
-        </a>
+        <div class="dashboard-grid">
+            
+            <a href="/produccion" class="menu-card card-produccion">
+                <div class="icon-container"><i class="fas fa-blender"></i></div>
+                <h3>Producción Simple</h3>
+                <span>Registrar lo que cocinamos hoy</span>
+            </a>
+            
+            <a href="/merma" class="menu-card card-merma">
+                <div class="icon-container"><i class="fas fa-trash-alt"></i></div>
+                <h3>Registrar Merma</h3>
+                <span>Reportar desperdicios o pérdidas</span>
+            </a>
 
-        <a href="/inventario-actual" class="menu-button" style="background-color: #6f42c1;">
-            📦 Ver Inventario Actual (En Vivo)
-        </a>
-        
-        <a href="/historial" class="menu-button" style="background-color: #f0ad4e;">
-            📜 Ver Historial de Stock
-        </a>
+            <a href="/ventas" class="menu-card card-ventas">
+                <div class="icon-container"><i class="fas fa-file-excel"></i></div>
+                <h3>Cargar Ventas</h3>
+                <span>Subir archivo Excel diario</span>
+            </a>
 
-        <a href="/productos" class="menu-button" style="background-color: #888;">
-            📦 Gestionar Catálogo
-        </a>
+            <a href="/inventario-actual" class="menu-card card-inventario">
+                <div class="icon-container"><i class="fas fa-boxes"></i></div>
+                <h3>Inventario en Vivo</h3>
+                <span>Ver existencias actuales</span>
+            </a>
+            
+            <a href="/historial" class="menu-card card-historial">
+                <div class="icon-container"><i class="fas fa-history"></i></div>
+                <h3>Historial</h3>
+                <span>Bitácora de movimientos</span>
+            </a>
 
-        <a href="/recetas" class="menu-button" style="background-color: #5bc0de;">
-            🍲 Gestionar Recetas
-        </a>
+            <a href="/productos" class="menu-card card-productos">
+                <div class="icon-container"><i class="fas fa-tags"></i></div>
+                <h3>Productos</h3>
+                <span>Gestionar catálogo</span>
+            </a>
+
+            <a href="/recetas" class="menu-card card-recetas">
+                <div class="icon-container"><i class="fas fa-book-open"></i></div>
+                <h3>Recetas</h3>
+                <span>Configurar ingredientes</span>
+            </a>
+
+        </div>
     </div>
+
 </body>
 </html>

@@ -4,64 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Stock - ProteinTrack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; }
-        
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; align-items: center; flex-wrap: wrap; }
-        input[type="date"] { padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-consultar { background-color: #337ab7; }
+        /* --- ESTILOS VISUALES (INTEGRADOS) --- */
+        :root {
+            --primary: #2c3e50;
+            --accent: #f39c12; /* NARANJA HISTORIAL */
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #ddd;
+        }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; color: #333; }
-        tr:hover { background-color: #f5f5f5; }
-        .no-data { text-align: center; color: #777; padding: 20px; font-style: italic; }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Botón Volver */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .btn-back:hover { color: var(--accent); }
+
+        /* Tarjeta Principal */
+        .content-card {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header-section h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+        .header-section p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95rem; }
+
+        /* --- CONTROLES DE FECHA --- */
+        .controls-wrapper {
+            background-color: #ffff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end; /* Alinear abajo para que el botón coincida con el input */
+            justify-content: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+            max-width: 300px;
+        }
+
+        label { font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+
+        .form-control {
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.15);
+        }
+
+        .btn-search {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 13px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 1rem;
+        }
+        .btn-search:hover {
+            background-color: #d35400;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(211, 84, 0, 0.2);
+        }
+
+        /* --- TABLA --- */
+        .table-container {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background-color: var(--primary); color: white; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f1f1; }
+        th { font-weight: 500; }
+        tr:hover td { background-color: #fcfcfc; }
+        
+        /* Mensajes de estado */
+        .no-data {
+            text-align: center;
+            padding: 40px !important;
+            color: #95a5a6;
+            font-style: italic;
+        }
+        .no-data i {
+            display: block; font-size: 2rem; margin-bottom: 10px; opacity: 0.5;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-actions">
-            <a href="/" class="btn-back">⬅ Volver al Menú</a>
-        </div>
-        <h1>📜 Historial de Stock Diario</h1>
+    <div class="main-container">
         
-        <div class="controls">
-            <input type="date" id="fecha-input">
-            <button class="btn-consultar" onclick="consultarHistorial()">🔍 Consultar Fecha</button>
+        <a href="/" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+
+        <div class="content-card">
+            
+            <div class="header-section">
+                <h1><i class="fas fa-history"></i> Historial de Cierres</h1>
+                <p>Consulta la foto exacta del inventario en días anteriores</p>
+            </div>
+
+            <div class="controls-wrapper">
+                <div class="input-group">
+                    <label for="fecha-input">Selecciona una Fecha:</label>
+                    <input type="date" id="fecha-input" class="form-control">
+                </div>
+                <button class="btn-search" onclick="consultarHistorial()">
+                    <i class="fas fa-search"></i> Consultar
+                </button>
+            </div>
+
+            <div id="mensaje" style="text-align: center; margin-bottom: 10px;"></div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Stock Registrado</th>
+                            <th>Unidad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body">
+                        <tr>
+                            <td colspan="3" class="no-data">
+                                <i class="far fa-calendar-times"></i>
+                                Selecciona una fecha y pulsa Consultar
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-
-        <div id="mensaje" style="text-align: center; margin-bottom: 10px;"></div>
-
-        <table id="tabla-historial">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Stock Registrado</th>
-                    <th>Unidad</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-body">
-                </tbody>
-        </table>
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:5000";
+        const API_URL = ""; // Relativo
         const tablaBody = document.getElementById("tabla-body");
         const mensajeDiv = document.getElementById("mensaje");
-        document.getElementById("fecha-input").valueAsDate = new Date();
+        
+        // Poner fecha de ayer por defecto (más útil para historial)
+        const ayer = new Date();
+        ayer.setDate(ayer.getDate() - 1);
+        document.getElementById("fecha-input").valueAsDate = ayer;
 
         async function consultarHistorial() {
             const fecha = document.getElementById("fecha-input").value;
             if(!fecha) return;
 
-            tablaBody.innerHTML = "<tr><td colspan='3' style='text-align:center'>Cargando...</td></tr>";
+            // Loading state bonito
+            tablaBody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:30px;'><i class='fas fa-spinner fa-spin'></i> Buscando registros...</td></tr>";
             mensajeDiv.textContent = "";
 
             try {
@@ -71,22 +216,29 @@
                 tablaBody.innerHTML = "";
                 
                 if(datos.length === 0) {
-                    tablaBody.innerHTML = "<tr><td colspan='3' class='no-data'>No hay registros guardados para esta fecha.</td></tr>";
+                    tablaBody.innerHTML = `
+                        <tr>
+                            <td colspan='3' class='no-data'>
+                                <i class="far fa-folder-open"></i>
+                                No se encontraron registros de cierre para el <strong>${fecha}</strong>.
+                            </td>
+                        </tr>`;
                     return;
                 }
 
                 datos.forEach(row => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td>${row.nombre}</td>
-                        <td>${parseFloat(row.stock_registrado).toFixed(3)}</td>
-                        <td>${row.unidad_nombre}</td>
+                        <td><strong>${row.nombre}</strong></td>
+                        <td style="color: var(--accent); font-weight:bold;">${parseFloat(row.stock_registrado).toFixed(3)}</td>
+                        <td style="color:#7f8c8d;">${row.unidad_nombre}</td>
                     `;
                     tablaBody.appendChild(tr);
                 });
 
             } catch(e) {
-                tablaBody.innerHTML = "<tr><td colspan='3'>Error al cargar datos</td></tr>";
+                console.error(e);
+                tablaBody.innerHTML = "<tr><td colspan='3' style='color:red; text-align:center'>Error al conectar con el servidor.</td></tr>";
             }
         }
     </script>

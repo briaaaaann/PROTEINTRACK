@@ -4,113 +4,249 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cargar Ventas - ProteinTrack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="file"], input[type="text"], input[type="number"], select, button {
-            width: 100%; padding: 10px; border: 1px solid #ccc;
-            border-radius: 4px; box-sizing: border-box;
+        :root {
+            --primary: #2c3e50;
+            --accent: #2980b9; 
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #ddd;
         }
-        button {
-            color: white; border: none; font-size: 16px; cursor: pointer;
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; 
+            min-height: 100vh;
         }
-        .btn-upload { background-color: #337ab7; } 
-        .btn-create { background-color: #5cb85c; margin-top: 10px; } 
-        
-        #mensaje { margin-top: 15px; padding: 10px; border-radius: 4px; text-align: center; }
-        .mensaje-exito { background-color: #dff0d8; color: #3c763d; }
-        .mensaje-error { background-color: #f2dede; color: #a94442; }
-        .mensaje-info { background-color: #d9edf7; color: #31708f; }
-        #crear-producto-container {
-            display: none;
+
+        .main-container {
+            width: 100%;
+            max-width: 700px; 
             margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #fafafa;
+            margin-bottom: 40px;
         }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #337ab7; font-weight: bold; font-size: 1.1em; }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+        .btn-back:hover { color: var(--primary); }
+
+        .form-card {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--accent);
+        }
+
+        .header-section { text-align: center; margin-bottom: 30px; }
+        .header-section h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+        .header-section p { color: #7f8c8d; font-size: 0.95rem; margin-top: 5px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); font-size: 0.9rem; }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eef2f7;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(41, 128, 185, 0.1);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            background-color: white;
+            border: 2px dashed #bdc3c7;
+            cursor: pointer;
+        }
+        input[type="file"]:hover { border-color: var(--accent); }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-primary { background-color: var(--accent); }
+        .btn-primary:hover { background-color: #2471a3; transform: translateY(-2px); }
+        
+        .btn-secondary { background-color: #27ae60; margin-top: 20px;} 
+        .btn-secondary:hover { background-color: #219150; }
+        
+        .btn-small {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            background-color: #34495e;
+            margin-top: 10px;
+        }
+
+        .alert {
+            padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; font-weight: 500;
+            display: none; 
+        }
+        .mensaje-exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block;}
+        .mensaje-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block;}
+        .mensaje-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; display: block;}
+        #crear-producto-container {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            border-left: 5px solid #f39c12;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #crear-producto-container h2 {
+            margin-top: 0;
+            color: #d35400;
+            font-size: 1.4rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        th { background-color: #34495e; color: white; font-weight: 500; }
+        td input, td select { padding: 5px; border: 1px solid #ddd; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .checkbox-wrapper {
+            display: flex; align-items: center; gap: 10px;
+            padding: 15px; background: white; border-radius: 8px; border: 1px solid #ddd;
+            margin-bottom: 15px; cursor: pointer;
+        }
+        .checkbox-wrapper input { transform: scale(1.5); cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-actions">
-            <a href="/" class="btn-back">⬅ Volver al Menú</a>
-        </div>
-        <h1>Cargar Ventas 📂</h1>
-        <div class="form-group">
-            <label for="file-input">Seleccionar archivo Excel (.xls, .xlsx):</label>
-            <input type="file" id="file-input" accept=".xls,.xlsx">
-        </div>
-
-        <div class="form-group">
-            <label for="fecha-venta-input">Fecha de Registro de Ventas:</label>
-            <input type="date" id="fecha-venta-input" style="border: 1px solid #337ab7; background-color: #f0f8ff;">
-        </div>
+    <div class="main-container">
         
-        <button id="upload-btn" class="btn-upload">Cargar Archivo</button>
-        <div id="mensaje"></div> 
-        <hr>
+        <a href="/" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
 
-        <div id="crear-producto-container">
-            <h2 style="color: #d9534f;">⚠️ Producto No Encontrado</h2>
-            <p id="error-detalle" class="mensaje-error" style="font-weight: bold;"></p>
-            <p>Complete los datos para crearlo. Si el producto se prepara (ej. Waffle, Frappé), agregue su receta aquí mismo.</p>
+        <div class="form-card">
             
-            <div class="form-group">
-                <label>CLAVE (Soft Restaurant):</label>
-                <input type="text" id="clave-input" readonly style="background-color: #eee;">
-            </div>
-            <div class="form-group">
-                <label>Nombre del Producto:</label>
-                <input type="text" id="nombre-input">
-            </div>
-            <div class="form-group">
-                <label>Familia:</label>
-                <select id="familia-select">
-                    <option value="">Cargando...</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Unidad de Medida (Venta):</label>
-                <select id="unidad-select">
-                    <option value="">Cargando...</option>
-                </select>
+            <div class="header-section">
+                <h1><i class="fas fa-file-excel"></i> Cargar Ventas</h1>
+                <p>Sube el archivo diario para descontar inventario</p>
             </div>
 
-            <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-                <label style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="check-tiene-receta" style="width: auto; margin-right: 10px;">
+            <div class="form-group">
+                <label for="fecha-venta-input">Fecha de Venta (Del Excel):</label>
+                <input type="date" id="fecha-venta-input" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="file-input">Seleccionar Archivo Excel (.xlsx):</label>
+                <input type="file" id="file-input" accept=".xlsx, .xls" class="form-control">
+            </div>
+
+            <button id="upload-btn" class="btn btn-primary">
+                <i class="fas fa-cloud-upload-alt"></i> Procesar Archivo
+            </button>
+
+            <div id="mensaje" class="alert"></div>
+            <div id="error-detalle" style="color: #c0392b; font-size: 0.9rem; margin-top: 10px; text-align: center;"></div>
+
+
+            <div id="crear-producto-container" style="display: none;">
+                
+                <h2><i class="fas fa-exclamation-triangle"></i> Producto No Encontrado</h2>
+                <p style="margin-bottom: 20px;">El sistema detectó un producto nuevo en el Excel. Regístralo para continuar.</p>
+
+                <div class="form-group">
+                    <label>Clave del Producto (Excel):</label>
+                    <input type="text" id="clave-input" class="form-control" disabled style="background-color: #e9ecef; color: #7f8c8d;">
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre del Producto:</label>
+                    <input type="text" id="nombre-input" class="form-control">
+                </div>
+
+                <div class="row" style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Familia:</label>
+                        <select id="familia-select" class="form-control"></select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Unidad Base:</label>
+                        <select id="unidad-select" class="form-control"></select>
+                    </div>
+                </div>
+
+                <label class="checkbox-wrapper" for="check-tiene-receta">
+                    <input type="checkbox" id="check-tiene-receta">
                     <strong>Este producto lleva Receta (Ingredientes)</strong>
                 </label>
 
-                <div id="seccion-ingredientes" style="display: none; background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-top: 10px;">
-                    <h4>Ingredientes de la Receta:</h4>
-                    <table style="width: 100%; font-size: 0.9em;">
+                <div id="seccion-ingredientes" style="display: none; padding: 15px; background: #e8f6f3; border-radius: 8px;">
+                    <h4 style="margin-top: 0; color: #16a085;"><i class="fas fa-carrot"></i> Ingredientes de la Receta</h4>
+                    
+                    <table>
                         <thead>
                             <tr>
-                                <th>Insumo</th>
-                                <th>Cant.</th>
-                                <th>Unidad</th>
-                                <th></th>
+                                <th style="background: #16a085;">Insumo</th>
+                                <th style="background: #16a085; width: 80px;">Cant.</th>
+                                <th style="background: #16a085;">Unidad</th>
+                                <th style="background: #16a085; width: 40px;"></th>
                             </tr>
                         </thead>
                         <tbody id="lista-ingredientes">
                             </tbody>
                     </table>
-                    <button type="button" id="btn-add-ing" style="background-color: #337ab7; margin-top: 5px; padding: 5px 10px; font-size: 0.8em;">+ Agregar Ingrediente</button>
+                    
+                    <button type="button" id="btn-add-ing" class="btn btn-small">
+                        <i class="fas fa-plus"></i> Agregar Ingrediente
+                    </button>
                 </div>
-            </div>
 
-            <button id="crear-btn" class="btn-create" style="margin-top: 20px;">Guardar Producto (y Receta) y Reintentar</button>
-        </div>
+                <button id="crear-btn" class="btn btn-secondary">
+                    <i class="fas fa-save"></i> Guardar y Reintentar Carga
+                </button>
+
+            </div>
+            </div>
     </div>
 
-    <script src="/static/js/ventas.js"></script>
+    <script src="{{ url_for('static', filename='js/ventas.js') }}"></script>
+    
 </body>
 </html>
