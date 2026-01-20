@@ -30,20 +30,22 @@
             </div>
 
             <div class="form-group">
-                <label for="buscador-producto">Buscar Producto:</label>
-                <div style="position: relative;">
-                    <i class="fas fa-search" style="position: absolute; left: 10px; top: 12px; color: #95a5a6;"></i>
-                    <input type="text" id="buscador-producto" class="form-control" style="padding-left: 35px;" placeholder="Escribe para filtrar...">
+                <label for="producto-buscador">Producto:</label>
+                
+                <div class="buscador-container">
+                    <input type="text" 
+                        id="producto-buscador" 
+                        class="form-control" 
+                        placeholder="Escribe para buscar..." 
+                        autocomplete="off">
+                    
+                    <div id="lista-resultados" class="resultados-lista"></div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="producto-select">Seleccionar de la lista:</label>
-                <select id="producto-select" class="form-control" size="5" style="height: auto;">
-                    <option value="">Cargando productos...</option>
-                </select>
+                <input type="hidden" id="producto-id-hidden">
+                
                 <small style="color: #7f8c8d; font-size: 0.8em; margin-top: 5px; display: block;">
-                    * Haz clic en un producto para seleccionarlo
+                    * Escribe el nombre y selecciona de la lista.
                 </small>
             </div>
 

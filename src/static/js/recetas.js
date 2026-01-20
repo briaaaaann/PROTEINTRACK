@@ -1,4 +1,4 @@
-const API_URL = "http://192.168.1.130:5000"; 
+const API_URL = ""; // Déjalo vacío si estás en el mismo servidor, o pon tu IP http://192.168.1.130:5000
 
 let todasLasRecetas = [];
 let insumosList = [];   // Todos los productos (para ser usados como ingredientes)
@@ -12,24 +12,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Filtros
-    document.getElementById("buscador").addEventListener("input", filtrarTabla);
+    const buscador = document.getElementById("buscador");
+    if(buscador) buscador.addEventListener("input", filtrarTabla);
     
-    // Botones de Ordenamiento (YA FUNCIONALES)
+    // Botones de Ordenamiento
     const btnNombre = document.getElementById("btn-sort-nombre");
     const btnProd = document.getElementById("btn-sort-prod");
 
-    btnNombre.addEventListener("click", () => {
-        ordenarTabla('nombre');
-        actualizarBotonesOrden(btnNombre, btnProd);
-    });
+    if(btnNombre) {
+        btnNombre.addEventListener("click", () => {
+            ordenarTabla('nombre');
+            actualizarBotonesOrden(btnNombre, btnProd);
+        });
+    }
 
-    btnProd.addEventListener("click", () => {
-        ordenarTabla('nombre_producto_final_calculado'); // Usamos el nombre calculado
-        actualizarBotonesOrden(btnProd, btnNombre);
-    });
+    if(btnProd) {
+        btnProd.addEventListener("click", () => {
+            ordenarTabla('nombre_producto_final_calculado'); 
+            actualizarBotonesOrden(btnProd, btnNombre);
+        });
+    }
 });
 
-// 1. CARGA DE CATALOGOS (Espera a que termine antes de cargar recetas)
+/* =========================================
+   1. CARGA DE CATÁLOGOS
+   ========================================= */
 async function cargarDatosIniciales() {
     try {
         const [resProd, resUni] = await Promise.all([
@@ -40,23 +47,27 @@ async function cargarDatosIniciales() {
         const todos = await resProd.json();
         unidadesList = await resUni.json();
 
-        insumosList = todos; // Todo puede ser ingrediente
+        insumosList = todos; // Todo producto puede ser ingrediente
         productosList = todos.filter(p => p.es_producido || p.es_vendido); // Candidatos a producto final
 
-        // Llenar Select del Modal
+        // Llenar Select del Modal (Producto Final)
         const selFinal = document.getElementById("receta-producto-final");
-        selFinal.innerHTML = "<option value=''>-- Ninguno (Solo referencia) --</option>";
-        productosList.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.id_producto;
-            opt.textContent = p.nombre;
-            selFinal.appendChild(opt);
-        });
+        if(selFinal) {
+            selFinal.innerHTML = "<option value=''>-- Ninguno (Solo referencia) --</option>";
+            productosList.forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p.id_producto;
+                opt.textContent = p.nombre;
+                selFinal.appendChild(opt);
+            });
+        }
 
     } catch(e) { console.error("Error cargando catálogos:", e); }
 }
 
-// 2. CARGA DE RECETAS
+/* =========================================
+   2. CARGA DE RECETAS (TABLA PRINCIPAL)
+   ========================================= */
 async function cargarRecetas() {
     const tbody = document.getElementById("tabla-body");
     tbody.innerHTML = "<tr><td colspan='4' style='text-align:center'>Cargando...</td></tr>";
@@ -65,20 +76,20 @@ async function cargarRecetas() {
         const res = await fetch(`${API_URL}/api/recetas`);
         const data = await res.json();
         
-        // --- PROCESAMIENTO DE DATOS (Arregla columnas vacías) ---
+        // --- PROCESAMIENTO DE DATOS ---
         todasLasRecetas = data.map(r => {
-            // Buscamos el nombre del producto final usando el ID, ya que la API no siempre lo manda
+            // Calculamos nombre del producto final
             let nombreFinal = "N/A";
             if(r.id_producto_final) {
                 const prod = productosList.find(p => p.id_producto === r.id_producto_final);
                 if(prod) nombreFinal = prod.nombre;
-            } else if (r.producto_final_nombre) {
-                nombreFinal = r.producto_final_nombre;
+            } else if (r.nombre_producto) { // A veces viene del SQL directo
+                nombreFinal = r.nombre_producto;
             }
 
             return {
                 ...r,
-                nombre_producto_final_calculado: nombreFinal // Propiedad auxiliar para ordenar y mostrar
+                nombre_producto_final_calculado: nombreFinal
             };
         });
 
@@ -90,63 +101,69 @@ async function cargarRecetas() {
     }
 }
 
-// 3. RENDERIZADO
+/* =========================================
+   3. RENDERIZADO DE TABLA
+   ========================================= */
 function renderizarTabla(lista) {
     const tbody = document.getElementById("tabla-body");
     tbody.innerHTML = "";
 
-    if (lista.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:#777;'>No hay recetas.</td></tr>";
+    if (!lista || lista.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px; color:#777;'>No hay recetas registradas.</td></tr>";
         return;
     }
 
     lista.forEach(r => {
         const tr = document.createElement("tr");
 
-        // Columna Ingredientes: Si viene vacío, mostramos "Ver detalle"
-        let textoIngredientes = '<span style="color:#999; font-style:italic;">Ver detalle</span>';
-        if (r.ingredientes && r.ingredientes.length > 0) {
-            textoIngredientes = `<span style="background:#e8f8f5; color:#27ae60; padding:2px 8px; border-radius:10px; font-weight:bold;">${r.ingredientes.length} insumos</span>`;
+        // Nombre del Producto Final
+        const nombreProducto = (r.nombre_producto_final_calculado && r.nombre_producto_final_calculado !== 'N/A')
+            ? `<strong style="color:#2c3e50;">${r.nombre_producto_final_calculado}</strong>` 
+            : `<span style="color:#ccc; font-style:italic;">- Sin vincular -</span>`;
+
+        // Lista de Ingredientes (Viene del SQL como TEXTO concatenado)
+        let htmlIngredientes = "";
+        if (!r.lista_ingredientes || r.lista_ingredientes === 'Sin ingredientes') {
+            htmlIngredientes = '<span style="color:#ccc;">Sin ingredientes definidos</span>';
+        } else {
+            htmlIngredientes = `<div style="font-size:0.85em; color:#555; line-height:1.4;">${r.lista_ingredientes}</div>`;
         }
 
-        const nombreFinalDisplay = r.nombre_producto_final_calculado !== "N/A" 
-            ? `<strong>${r.nombre_producto_final_calculado}</strong>` 
-            : `<span style="color:#ccc;">- Sin asignar -</span>`;
-
         tr.innerHTML = `
-            <td>${r.nombre}</td>
-            <td>${nombreFinalDisplay}</td>
-            <td style="text-align:center;">${textoIngredientes}</td>
-            <td style="text-align: right;">
-                <button onclick="abrirModalEditar(${r.id_receta})" style="background:#3498db; color:white; border:none; border-radius:4px; padding:5px 10px; cursor:pointer;" title="Editar"><i class="fas fa-edit"></i></button>
-                <button onclick="eliminarReceta(${r.id_receta})" style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; margin-left:5px;" title="Borrar"><i class="fas fa-trash-alt"></i></button>
+            <td>
+                <div style="font-weight:600; font-size:1.05em;">${r.nombre}</div>
+            </td>
+            <td>${nombreProducto}</td>
+            <td>${htmlIngredientes}</td>
+            <td style="text-align: right; white-space: nowrap;">
+                <button onclick="abrirModalEditar(${r.id_receta})" class="btn-action" style="background:#3498db; color:white; border:none; border-radius:4px; padding:6px 10px; cursor:pointer; margin-right:5px;" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="eliminarReceta(${r.id_receta})" class="btn-action" style="background:#e74c3c; color:white; border:none; border-radius:4px; padding:6px 10px; cursor:pointer;" title="Borrar">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// 4. FUNCIONES DE ORDENAMIENTO
+/* =========================================
+   4. ORDENAMIENTO Y FILTROS
+   ========================================= */
 function ordenarTabla(columna, forzarRender = false) {
     if (!forzarRender) {
         if (ordenActual.columna === columna) ordenActual.ascendente = !ordenActual.ascendente;
         else { ordenActual.columna = columna; ordenActual.ascendente = true; }
     }
-
     const factor = ordenActual.ascendente ? 1 : -1;
-
     todasLasRecetas.sort((a, b) => {
-        let valA = a[columna] || "";
-        let valB = b[columna] || "";
-        
-        valA = valA.toString().toLowerCase();
-        valB = valB.toString().toLowerCase();
-
+        let valA = (a[columna] || "").toString().toLowerCase();
+        let valB = (b[columna] || "").toString().toLowerCase();
         if (valA < valB) return -1 * factor;
         if (valA > valB) return 1 * factor;
         return 0;
     });
-
     renderizarTabla(todasLasRecetas);
 }
 
@@ -154,42 +171,47 @@ function filtrarTabla() {
     const texto = document.getElementById("buscador").value.toLowerCase();
     const filtrados = todasLasRecetas.filter(r => 
         r.nombre.toLowerCase().includes(texto) || 
-        r.nombre_producto_final_calculado.toLowerCase().includes(texto)
+        r.nombre_producto_final_calculado.toLowerCase().includes(texto) ||
+        (r.lista_ingredientes && r.lista_ingredientes.toLowerCase().includes(texto))
     );
     renderizarTabla(filtrados);
 }
 
 function actualizarBotonesOrden(activo, inactivo) {
-    activo.classList.add("active");
-    inactivo.classList.remove("active");
+    if(activo) activo.classList.add("active");
+    if(inactivo) inactivo.classList.remove("active");
 }
 
-// 5. GESTIÓN DEL MODAL (Aquí está la corrección para EDITAR)
+/* =========================================
+   5. GESTIÓN DEL MODAL (CREAR / EDITAR)
+   ========================================= */
 function abrirModalNueva() {
     document.getElementById("modal-titulo").innerText = "Nueva Receta";
+    // IMPORTANTE: Asegúrate que en tu HTML los IDs sean "receta-id", "receta-nombre", etc.
+    // Si usabas "receta-id-hidden", cámbialo aquí o en el HTML. Usaremos "receta-id" según tu código.
     document.getElementById("receta-id").value = "";
     document.getElementById("receta-nombre").value = "";
     document.getElementById("receta-producto-final").value = "";
     document.getElementById("lista-ingredientes").innerHTML = "";
-    agregarFilaIngrediente(); 
+    
+    agregarFilaIngrediente(); // Fila vacía inicial
     document.getElementById("modal-receta").style.display = "flex";
 }
 
 async function abrirModalEditar(id) {
-    // 1. Mostrar modal cargando
     document.getElementById("modal-receta").style.display = "flex";
-    document.getElementById("modal-titulo").innerText = "Cargando ingredientes...";
-    document.getElementById("lista-ingredientes").innerHTML = ""; // Limpiar
+    document.getElementById("modal-titulo").innerText = "Cargando...";
+    document.getElementById("lista-ingredientes").innerHTML = ""; 
 
     let recetaFull = null;
 
     try {
-        // 2. PETICIÓN CRÍTICA: Traer detalle completo del servidor
+        // Obtenemos el detalle completo (ingredientes incluidos)
         const res = await fetch(`${API_URL}/api/recetas/${id}`);
         if(res.ok) {
             recetaFull = await res.json();
         } else {
-            // Fallback por si la API de detalle falla
+            // Fallback (solo si la API falla)
             recetaFull = todasLasRecetas.find(r => r.id_receta === id);
         }
     } catch(e) {
@@ -199,24 +221,24 @@ async function abrirModalEditar(id) {
 
     if(!recetaFull) { alert("No se pudo cargar la receta"); cerrarModal(); return; }
 
-    // 3. Llenar formulario
+    // Llenar formulario cabecera
     document.getElementById("modal-titulo").innerText = "Editar Receta";
     document.getElementById("receta-id").value = recetaFull.id_receta;
     document.getElementById("receta-nombre").value = recetaFull.nombre;
     document.getElementById("receta-producto-final").value = recetaFull.id_producto_final || "";
 
-    // 4. Llenar ingredientes
+    // Llenar filas de ingredientes
     const tbody = document.getElementById("lista-ingredientes");
     tbody.innerHTML = "";
 
     if (recetaFull.ingredientes && recetaFull.ingredientes.length > 0) {
         recetaFull.ingredientes.forEach(ing => {
-            // Manejamos 'cantidad' o 'cantidad_bruta' según venga del back
-            const cantidad = ing.cantidad || ing.cantidad_bruta || 0;
+            // CORRECCIÓN: El backend manda 'cantidad_estimada', el fallback 'cantidad'
+            const cantidad = ing.cantidad_estimada || ing.cantidad || 0;
             agregarFilaIngrediente(ing.id_insumo, cantidad);
         });
     } else {
-        agregarFilaIngrediente(); // Fila vacía si no hay
+        agregarFilaIngrediente(); 
     }
 }
 
@@ -231,14 +253,26 @@ function agregarFilaIngrediente(idInsumoPre = null, cantidadPre = null) {
     });
 
     tr.innerHTML = `
-        <td><select class="form-control-modal insumo-select" onchange="actualizarUnidadRow(this)">${options}</select></td>
-        <td><input type="number" class="form-control-modal cantidad-input" step="0.001" value="${cantidadPre || ''}" placeholder="0.00"></td>
-        <td style="text-align:center; padding-top:15px;"><span class="unidad-texto" style="font-size:0.8rem; color:#666;">-</span></td>
-        <td style="text-align:center;"><button type="button" class="btn-remove" onclick="this.closest('tr').remove()">&times;</button></td>
+        <td>
+            <select class="form-control-modal insumo-select" onchange="actualizarUnidadRow(this)">${options}</select>
+        </td>
+        <td>
+            <input type="number" class="form-control-modal cantidad-input" step="0.001" value="${cantidadPre || ''}" placeholder="0.00">
+        </td>
+        <td style="text-align:center; padding-top:10px;">
+            <span class="unidad-texto" style="font-size:0.85rem; color:#666; font-weight:bold;">-</span>
+        </td>
+        <td style="text-align:center;">
+            <button type="button" class="btn-remove" onclick="this.closest('tr').remove()" style="color:red; background:none; border:none; cursor:pointer; font-size:1.2rem;">&times;</button>
+        </td>
     `;
     tbody.appendChild(tr);
 
-    if(idInsumoPre) actualizarUnidadRow(tr.querySelector(".insumo-select"));
+    // Si precargamos un insumo, calculamos su unidad inmediatamente
+    if(idInsumoPre) {
+        const select = tr.querySelector(".insumo-select");
+        actualizarUnidadRow(select);
+    }
 }
 
 function actualizarUnidadRow(select) {
@@ -250,12 +284,16 @@ function actualizarUnidadRow(select) {
 
     const prod = insumosList.find(p => p.id_producto == idProd);
     if(prod) {
-        const u = unidadesList.find(x => x.id == prod.unidad_id);
+        // Buscamos la unidad por 'unidad' (FK) o 'unidad_id'
+        const idUnidadBuscada = prod.unidad || prod.unidad_id;
+        const u = unidadesList.find(x => x.id == idUnidadBuscada);
         span.innerText = u ? u.nombre : "u";
     }
 }
 
-// 6. GUARDAR
+/* =========================================
+   6. GUARDAR (CREATE / UPDATE)
+   ========================================= */
 async function guardarReceta() {
     const id = document.getElementById("receta-id").value;
     const nombre = document.getElementById("receta-nombre").value;
@@ -263,7 +301,7 @@ async function guardarReceta() {
 
     if (!nombre) { alert("El nombre es obligatorio"); return; }
 
-    // Recolectar tabla
+    // Recolectar datos de la tabla
     const filas = document.querySelectorAll("#lista-ingredientes tr");
     let ingredientes = [];
 
@@ -271,12 +309,11 @@ async function guardarReceta() {
         const sel = tr.querySelector(".insumo-select");
         const cant = tr.querySelector(".cantidad-input");
         if(sel && sel.value && cant.value) {
-            // Buscamos la unidad del insumo original para evitar Error 500
             const prod = insumosList.find(p => p.id_producto == sel.value);
             ingredientes.push({
                 id_insumo: parseInt(sel.value),
                 cantidad: parseFloat(cant.value),
-                unidad_id: prod ? prod.unidad_id : null 
+                unidad_id: prod ? (prod.unidad || prod.unidad_id) : null 
             });
         }
     });
@@ -303,7 +340,7 @@ async function guardarReceta() {
 
         if(res.ok) {
             cerrarModal();
-            cargarRecetas();
+            cargarRecetas(); // Recargar tabla principal
         } else {
             const err = await res.json();
             alert("Error: " + (err.error || err.message || "Error desconocido"));
@@ -314,3 +351,39 @@ async function guardarReceta() {
         btn.innerText = originalText; btn.disabled = false;
     }
 }
+
+/* =========================================
+   7. FUNCIONES AUXILIARES FALTANTES
+   ========================================= */
+function cerrarModal() {
+    document.getElementById("modal-receta").style.display = "none";
+}
+
+async function eliminarReceta(id) {
+    if(!confirm("¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/recetas/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if(res.ok) {
+            cargarRecetas();
+        } else {
+            const err = await res.json();
+            alert("Error al eliminar: " + (err.error || "Desconocido"));
+        }
+    } catch(e) {
+        console.error(e);
+        alert("Error de conexión al intentar eliminar.");
+    }
+}
+
+// Hacemos accesibles las funciones al HTML global
+window.abrirModalEditar = abrirModalEditar;
+window.eliminarReceta = eliminarReceta;
+window.guardarReceta = guardarReceta;
+window.agregarFilaIngrediente = agregarFilaIngrediente;
+window.actualizarUnidadRow = actualizarUnidadRow;
+window.abrirModalNueva = abrirModalNueva;
+window.cerrarModal = cerrarModal;

@@ -21,14 +21,21 @@ def crear_receta(id_producto_final: int, nombre: str, ingredientes: List[Dict]):
 
 def obtener_receta_completa(id_receta: int):
     with get_cursor() as cur:
+        # 1. Datos generales de la receta
         cur.execute("SELECT * FROM recetas WHERE id_receta = %s;", (id_receta,))
         receta = cur.fetchone()
+        
         if not receta:
             return None
             
+        # 2. Lista de ingredientes (AGREGAMOS dr.id_insumo)
         cur.execute(
             """
-            SELECT p.nombre, dr.cantidad_estimada, um.nombre as unidad
+            SELECT 
+                dr.id_insumo,   -- IMPORTANTE: Necesitamos el ID para el select
+                p.nombre, 
+                dr.cantidad_estimada, 
+                um.nombre as unidad
             FROM detalle_receta dr
             JOIN productos p ON dr.id_insumo = p.id_producto
             JOIN unidades_medida um ON dr.unidad = um.id
@@ -37,6 +44,7 @@ def obtener_receta_completa(id_receta: int):
             (id_receta,)
         )
         receta['ingredientes'] = cur.fetchall()
+        
         return receta
 
 def eliminar_receta(id_receta: int):
@@ -93,17 +101,28 @@ def actualizar_receta(id_receta: int, id_producto_final: int, nombre: str, ingre
 
 def obtener_todas_las_recetas_con_producto():
     with get_cursor() as cur:
+        # Usamos COALESCE y STRING_AGG para evitar errores si hay nulos
         cur.execute(
             """
             SELECT 
                 r.id_receta, 
                 r.nombre, 
                 r.id_producto_final, 
-                p.nombre as nombre_producto
+                p.nombre as nombre_producto,
+                COALESCE(
+                    STRING_AGG(
+                        CONCAT(pi.nombre, ' (', CAST(dr.cantidad_estimada AS TEXT), ' ', um.nombre, ')'), 
+                        ', '
+                    ), 
+                    'Sin ingredientes'
+                ) as lista_ingredientes
             FROM recetas r
-            -- Usamos LEFT JOIN por si un producto fue eliminado pero la receta quedó
             LEFT JOIN productos p ON r.id_producto_final = p.id_producto
-            ORDER BY p.nombre, r.nombre;
+            LEFT JOIN detalle_receta dr ON r.id_receta = dr.id_receta
+            LEFT JOIN productos pi ON dr.id_insumo = pi.id_producto
+            LEFT JOIN unidades_medida um ON dr.unidad = um.id
+            GROUP BY r.id_receta, r.nombre, p.nombre, p.id_producto
+            ORDER BY r.nombre ASC;
             """
         )
         return cur.fetchall()
