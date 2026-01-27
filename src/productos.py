@@ -95,36 +95,30 @@ def obtener_producto_por_nombre_y_familia(nombre_producto: str, nombre_familia: 
             return producto['id_producto']
         return None
     
-def obtener_producto_por_codigo_sr(codigo_sr: str):
-    with get_cursor() as cur:
-        try:
-            cur.execute(
-                """
-                SELECT id_producto
-                FROM productos 
-                WHERE 
-                    -- --- INICIO DE LA CORRECCIÓN ---
-                    -- 1. Revisa que el código en la BD contenga SÓLO números.
-                    -- Esto ignora automáticamente valores '' o NULL o 'ABC'
-                    codigo_softrestaurant ~ '^[0-9]+$'
-                    
-                    -- 2. SOLO SI ES NUMÉRICO, intenta convertirlo y compararlo.
-                    AND CAST(codigo_softrestaurant AS INTEGER) = CAST(%s AS INTEGER)
-                    -- --- FIN DE LA CORRECCIÓN ---
-                AND activo = TRUE;
-                """,
-                (codigo_sr,) 
-            )
-            
-            producto = cur.fetchone()
-            
-            if producto:
-                return producto['id_producto']
-            return None
+def obtener_producto_por_codigo_sr(codigo_sr):
+    if not codigo_sr:
+        return None
         
-        except Exception as e:
-            print(f"⚠️ ADVERTENCIA: Error al buscar código {codigo_sr}. Detalle: {e}")
+    try:
+        # Limpiamos espacios y quitamos ceros a la izquierda aquí también
+        codigo_limpio = str(codigo_sr).strip().lstrip('0')
+
+        with get_cursor() as cur:
+            cur.execute("""
+                SELECT id_producto 
+                FROM productos 
+                WHERE codigo_softrestaurant = %s 
+                AND activo = true
+            """, (codigo_limpio,))
+            
+            res = cur.fetchone()
+            if res:
+                return res['id_producto']
             return None
+
+    except Exception as e:
+        print(f"⚠️ Error buscando código '{codigo_sr}': {e}")
+        return None
 
 def actualizar_producto(id_producto: int, nombre: str, unidad_id: int, id_familia: int, codigo_softrestaurante: str, es_producido: bool, es_vendido: bool, activo: bool, es_registrable_produccion: bool):
     with get_cursor(commit=True) as cur:

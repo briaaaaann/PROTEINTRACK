@@ -57,67 +57,109 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
 def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1, fecha_venta_str: str = None):
     fecha_final = fecha_venta_str if fecha_venta_str else date.today()
 
-    if ventas.verificar_existencia_ventas_fecha(fecha_final):
-        return {
-            "exito": False, 
-            "error": f"Verifica la fecha: Ya existen ventas registradas para el día {fecha_final}."
-        }
-    
     print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Fecha: {fecha_venta_str})")
+    
     try:
-        df = pd.read_excel(ruta_archivo, header=4, dtype={'CLAVE': str}) 
-        df = df.dropna(subset=['CLAVE'])
+        # 1. LEER EXCEL
+        # Forzamos header=4 como en tu código original
+        df = pd.read_excel(ruta_archivo, header=4, converters={'CLAVE': str})
+        df = df.dropna(subset=['CLAVE']) # Ignorar filas sin clave
         
-        if fila_inicio > 1:
-            df_a_procesar = df.iloc[fila_inicio - 1:]
-        else:
-            df_a_procesar = df
+        # --- FASE 1: VALIDACIÓN DE PRODUCTOS (MODO ESCÁNER) ---
+        # Recorremos todo el Excel SIN guardar nada en la BD para ver si falta algo.
         
-        print(f"✅ Excel leído. {len(df_a_procesar)} filas válidas a procesar.")
+        mapa_cache_productos = {} # Guardamos los IDs aquí para no consultar la BD dos veces
+        
+        # Iteramos sobre el DataFrame original completo
+        for index, row in df.iterrows():
+            fila_log = df.index.get_loc(index) + 1 # Fila real del Excel (aprox)
+            
+            # Limpieza de clave idéntica a tu lógica original
+            clave_raw = str(row['CLAVE'])
+            if clave_raw.lower() == 'nan' or clave_raw == '':
+                continue
+            clave_sr = clave_raw.strip().lstrip('0') # Agregamos .strip() por seguridad
+            nombre_prod_log = str(row['DESCRIPCION']).strip()
+            
+            # Si ya validamos este producto en una fila anterior, saltamos
+            if clave_sr in mapa_cache_productos:
+                continue
+
+            # Buscamos en BD
+            id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
+            
+            if not id_prod:
+                # ¡ERROR ENCONTRADO!
+                # Como no hemos guardado nada, devolvemos el error limpio.
+                print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}'")
+                return {
+                    "exito": False,
+                    "error": "Producto no encontrado",
+                    "filas_procesadas_exitosamente": 0, # Cero porque no guardamos nada aún
+                    "fila_excel": fila_log, 
+                    "clave_faltante": clave_sr,
+                    "nombre_producto": nombre_prod_log,
+                    "familia_grupo": row.get('GRUPO', 'N/A')
+                }
+            
+            # Si existe, lo guardamos en caché para usarlo en la FASE 2
+            mapa_cache_productos[clave_sr] = id_prod
+
+        # --- FASE 2: VALIDACIÓN DE FECHA ---
+        # Solo verificamos la fecha si sabemos que TODOS los productos existen.
+        if ventas.verificar_existencia_ventas_fecha(fecha_final):
+            return {
+                "exito": False, 
+                "error": f"Verifica la fecha: Ya existen ventas registradas para el día {fecha_final}. Si hubo un error previo, borra las ventas parciales en el historial."
+            }
+
+        # --- FASE 3: GUARDADO TRANSACCIONAL ---
+        # Si llegamos aquí, el Excel es perfecto y la fecha está libre. Guardamos todo.
         
         exitos = 0
         fallos = 0
         
-        for index, row in df_a_procesar.iterrows():
+        for index, row in df.iterrows():
             fila_log = df.index.get_loc(index) + 1
             
             try:
-                clave_sr = str(row['CLAVE']).split('.')[0]
-                nombre_prod_log = row['DESCRIPCION'] 
+                # Recuperamos datos limpios
+                clave_sr = str(row['CLAVE']).split('.')[0].strip()
+                nombre_prod_log = str(row['DESCRIPCION']).strip()
                 cantidad = row['CANTIDAD']
                 precio = row['PRECIO']
-                descuento = row.get('Descuento', 0) 
+                descuento = row.get('Descuento', 0)
                 
-                id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
+                # Obtenemos el ID directo de la memoria (ya sabemos que existe)
+                id_prod = mapa_cache_productos[clave_sr]
                 
-                if id_prod:
-                    print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}'...")
-                    if registrar_venta_logica(id_prod, cantidad, precio, descuento, fecha_venta_str):
-                        exitos += 1
-                    else:
-                        fallos += 1
+                print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}'...")
                 
+                # Llamamos a tu función de registro
+                if registrar_venta_logica(id_prod, cantidad, precio, descuento, fecha_venta_str):
+                    exitos += 1
                 else:
-                    print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}'")
-                    return {
-                        "exito": False,
-                        "error": "Producto no encontrado",
-                        "filas_procesadas_exitosamente": exitos, 
-                        "fila_excel": fila_log, 
-                        "clave_faltante": clave_sr,
-                        "nombre_producto": nombre_prod_log,
-                        "familia_grupo": row.get('GRUPO', 'N/A')
-                    }
-
+                    print(f"⚠️ Alerta: registrar_venta_logica devolvió False en fila {fila_log}")
+                    fallos += 1
+                    
             except Exception as e:
                 print(f"❌ ERROR Fila {fila_log}: {e}")
                 fallos += 1
         
+        # FIN DEL PROCESO
+        if fallos > 0:
+             return {
+                "exito": True, # Ponemos True parcial para que no bloquee, o False si prefieres ser estricto
+                "mensaje": f"Proceso terminado. Éxitos: {exitos}, Errores de lógica: {fallos}",
+                "filas_procesadas_exitosamente": exitos,
+                "filas_omitidas_por_error_interno": fallos
+            }
+
         return {
             "exito": True,
             "mensaje": "Archivo procesado completamente",
             "filas_procesadas_exitosamente": exitos,
-            "filas_omitidas_por_error_interno": fallos
+            "filas_omitidas_por_error_interno": 0
         }
 
     except Exception as e:
