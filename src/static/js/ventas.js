@@ -16,7 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const seccionIngredientes = document.getElementById("seccion-ingredientes");
     const btnAddIng = document.getElementById("btn-add-ing");
     const listaIngredientes = document.getElementById("lista-ingredientes");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const progressText = document.getElementById("progress-text");
 
+    let progressInterval;
     let archivoExcel;
     let filaDeError = 1; 
     let totalVentasProcesadas = 0;
@@ -60,61 +64,98 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function handleUpload(fila_inicio = 1) {
-        if (fila_inicio === 1) {
-            totalVentasProcesadas = 0;
-            archivoExcel = fileInput.files[0];
-            if (!archivoExcel) {
-                mostrarMensaje("Por favor, seleccione un archivo", "error");
-                return;
-            }
-        }
-        const fechaSeleccionada = fechaInput.value;
-        if (!fechaSeleccionada) {
-             mostrarMensaje("Por favor, seleccione la fecha de las ventas", "error");
-             return;
+    async function handleUpload(filaInicio = 1) {
+        if (!fileInput.files[0]) {
+            mostrarMensaje("Selecciona un archivo primero", "error");
+            return;
         }
 
         const formData = new FormData();
-        formData.append("file", archivoExcel);
-        formData.append("fila_inicio", fila_inicio);
-        formData.append("fecha_venta", fechaSeleccionada);
-        mostrarMensaje(`Cargando y procesando archivo (desde fila ${fila_inicio})...`, "info");
+        formData.append("file", fileInput.files[0]);
+        
+        if (fechaInput && fechaInput.value) {
+            // CORRECCIÓN: Usar el nombre exacto que espera app.py
+            formData.append("fecha_venta", fechaInput.value); 
+        }
+
+        mostrarMensaje("", "");
         uploadBtn.disabled = true;
+        
+        // --- ANIMACIÓN BARRA ---
+        progressContainer.style.display = "block";
+        progressBar.style.width = "0%";
+        progressBar.textContent = "0%";
+        progressText.textContent = "Analizando archivo...";
+        
+        let width = 0;
+        clearInterval(progressInterval);
+        progressInterval = setInterval(() => {
+            if (width >= 90) clearInterval(progressInterval);
+            else {
+                width += Math.random() * 5;
+                if(width > 90) width = 90;
+                progressBar.style.width = width + "%";
+                progressBar.textContent = Math.round(width) + "%";
+            }
+        }, 400);
 
         try {
-            const response = await fetch(`${API_URL}/api/upload-ventas`, {
+            const res = await fetch(`${API_URL}/api/upload-ventas?fila_inicio=${filaInicio}`, {
                 method: "POST",
-                body: formData, 
+                body: formData
             });
-            const resultado = await response.json();
+
+            const data = await res.json();
+
+            // Finalizar barra
+            clearInterval(progressInterval);
+            progressBar.style.width = "100%";
+            progressBar.textContent = "100%";
+            progressText.textContent = "Procesado.";
+            setTimeout(() => { progressContainer.style.display = "none"; }, 1000);
+
+            // --- CORRECCIÓN CRÍTICA AQUÍ ---
+            // No dependemos del status HTTP (200, 400, 404), sino de la lógica interna (data.exito)
             
-            if (resultado.filas_procesadas_exitosamente) {
-                totalVentasProcesadas += resultado.filas_procesadas_exitosamente;
-            }
-            
-            if (resultado.exito) {
-                mostrarMensaje(`¡Éxito! Total de ${totalVentasProcesadas} ventas procesadas.`, "exito");
-                fileInput.value = ""; 
-                filaDeError = 1; 
-                totalVentasProcesadas = 0;
-                ocultarFormularioCreacion();
-            
-            } else if (resultado.error === "Producto no encontrado") {
-                filaDeError = resultado.fila_excel;
-                mostrarMensaje(`Fallo en Fila ${filaDeError}: ${resultado.error}. (Acumulado: ${totalVentasProcesadas} OK)`, "error");
-                mostrarFormularioCreacion(resultado);
-            
+            if (data.exito) {
+                // CASO DE ÉXITO REAL
+                mostrarMensaje(`✅ Éxito: ${data.mensaje || "Carga completa"}`, "exito");
+                uploadBtn.disabled = false;
+                
             } else {
-                throw new Error(resultado.error || "Error desconocido en el servidor");
+                // CASO DE ERROR (Lógico o de Servidor)
+                uploadBtn.disabled = false;
+
+                // Verificamos si el error es porque falta un producto
+                if (data.producto_faltante) {
+                    mostrarMensaje(`⚠️ ${data.error}`, "error");
+                    
+                    // Llenar datos para el modal
+                    errorDetalle.textContent = `Fila Excel: ${data.fila}. Clave no encontrada: "${data.producto_faltante}"`;
+                    filaDeError = data.fila; 
+                    
+                    claveInput.value = data.producto_faltante;
+                    nombreInput.value = data.descripcion_sugerida || "";
+                    
+                    // Abrir modal
+                    crearProductoContainer.style.display = "block";
+                    crearProductoContainer.scrollIntoView({ behavior: "smooth" });
+                    
+                } else {
+                    // Otros errores (fecha duplicada, archivo corrupto, etc.)
+                    mostrarMensaje(`❌ Error: ${data.error || "Error desconocido"}`, "error");
+                }
             }
 
         } catch (error) {
-            mostrarMensaje(`Error de red o subida: ${error.message}`, "error");
-        } finally {
+            clearInterval(progressInterval);
+            progressContainer.style.display = "none";
+            console.error(error);
+            mostrarMensaje("❌ Error de conexión o respuesta inválida del servidor", "error");
             uploadBtn.disabled = false;
         }
     }
+
     function mostrarFormularioCreacion(errorData) {
 
         errorDetalle.textContent = `CLAVE: ${errorData.clave_faltante} (${errorData.nombre_producto})`;

@@ -54,116 +54,93 @@ def registrar_venta_logica(id_producto: int, cantidad: float, precio_unitario: f
         print(f"❌ Error en registrar_venta_logica: {e}")
         return False
     
+# Asegúrate de importar esto arriba
+import pandas as pd
+from datetime import date
+from . import ventas
+from . import productos
+from . import produccion 
+
 def procesar_ventas_excel(ruta_archivo: str, fila_inicio: int = 1, fecha_venta_str: str = None):
     fecha_final = fecha_venta_str if fecha_venta_str else date.today()
-
-    print(f"ℹ️ Iniciando carga de ventas API desde: {ruta_archivo} (Fecha: {fecha_venta_str})")
+    print(f"ℹ️ Iniciando carga desde: {ruta_archivo}")
     
     try:
-        # 1. LEER EXCEL
-        # Forzamos header=4 como en tu código original
-        df = pd.read_excel(ruta_archivo, header=4, converters={'CLAVE': str})
-        df = df.dropna(subset=['CLAVE']) # Ignorar filas sin clave
+        # 1. LEER EXCEL (Converters es vital para mantener los '0' iniciales como texto)
+        df = pd.read_excel(ruta_archivo, header=4, converters={'CLAVE': str}) 
+        df = df.dropna(subset=['CLAVE'])
         
-        # --- FASE 1: VALIDACIÓN DE PRODUCTOS (MODO ESCÁNER) ---
-        # Recorremos todo el Excel SIN guardar nada en la BD para ver si falta algo.
+        # --- FASE 1: VALIDACIÓN (Escaneo sin guardar) ---
+        mapa_cache = {} 
         
-        mapa_cache_productos = {} # Guardamos los IDs aquí para no consultar la BD dos veces
-        
-        # Iteramos sobre el DataFrame original completo
         for index, row in df.iterrows():
-            fila_log = df.index.get_loc(index) + 1 # Fila real del Excel (aprox)
+            fila_log = df.index.get_loc(index) + 1 
             
-            # Limpieza de clave idéntica a tu lógica original
+            # Limpieza idéntica a la fase de guardado
             clave_raw = str(row['CLAVE'])
-            if clave_raw.lower() == 'nan' or clave_raw == '':
+            if clave_raw.lower() == 'nan' or clave_raw.strip() == '':
                 continue
-            clave_sr = clave_raw.strip().lstrip('0') # Agregamos .strip() por seguridad
-            nombre_prod_log = str(row['DESCRIPCION']).strip()
             
-            # Si ya validamos este producto en una fila anterior, saltamos
-            if clave_sr in mapa_cache_productos:
-                continue
+            # MAGIA DE LOS CEROS: Quita espacios y ceros a la izquierda (0123 -> 123)
+            clave_sr = clave_raw.strip().lstrip('0')
+            if not clave_sr: clave_sr = "0"
+
+            if clave_sr in mapa_cache: continue
 
             # Buscamos en BD
             id_prod = productos.obtener_producto_por_codigo_sr(clave_sr)
             
+            # SI NO EXISTE: DETENER Y AVISAR AL FRONTEND
             if not id_prod:
-                # ¡ERROR ENCONTRADO!
-                # Como no hemos guardado nada, devolvemos el error limpio.
-                print(f"❌ ERROR Fila {fila_log}: No se encontró producto con CLAVE='{clave_sr}'")
+                print(f"❌ ALERTA: Producto faltante fila {fila_log}: '{clave_sr}'")
                 return {
                     "exito": False,
-                    "error": "Producto no encontrado",
-                    "filas_procesadas_exitosamente": 0, # Cero porque no guardamos nada aún
-                    "fila_excel": fila_log, 
-                    "clave_faltante": clave_sr,
-                    "nombre_producto": nombre_prod_log,
-                    "familia_grupo": row.get('GRUPO', 'N/A')
+                    "error": f"Producto nuevo detectado: {clave_sr}", 
+                    "producto_faltante": clave_sr,  # JS usa esto para abrir el modal
+                    "descripcion_sugerida": str(row['DESCRIPCION']).strip(),
+                    "fila": fila_log,
+                    "filas_procesadas_exitosamente": 0
                 }
             
-            # Si existe, lo guardamos en caché para usarlo en la FASE 2
-            mapa_cache_productos[clave_sr] = id_prod
+            mapa_cache[clave_sr] = id_prod
 
-        # --- FASE 2: VALIDACIÓN DE FECHA ---
-        # Solo verificamos la fecha si sabemos que TODOS los productos existen.
-        if ventas.verificar_existencia_ventas_fecha(fecha_final):
+        # --- FASE 2: VERIFICAR FECHA ---
+        if fila_inicio == 1 and ventas.verificar_existencia_ventas_fecha(fecha_final):
             return {
                 "exito": False, 
-                "error": f"Verifica la fecha: Ya existen ventas registradas para el día {fecha_final}. Si hubo un error previo, borra las ventas parciales en el historial."
+                "error": f"Ya existen ventas registradas para el día {fecha_final}. Elimínalas antes de recargar."
             }
-
-        # --- FASE 3: GUARDADO TRANSACCIONAL ---
-        # Si llegamos aquí, el Excel es perfecto y la fecha está libre. Guardamos todo.
-        
+        # --- FASE 3: GUARDADO ---
         exitos = 0
         fallos = 0
         
         for index, row in df.iterrows():
-            fila_log = df.index.get_loc(index) + 1
-            
             try:
-                # Recuperamos datos limpios
-                clave_sr = str(row['CLAVE']).split('.')[0].strip()
-                nombre_prod_log = str(row['DESCRIPCION']).strip()
+                clave_sr = str(row['CLAVE']).strip().lstrip('0')
+                if not clave_sr: clave_sr = "0"
+                if clave_sr not in mapa_cache: continue # Seguridad extra
+
+                id_prod = mapa_cache[clave_sr]
                 cantidad = row['CANTIDAD']
                 precio = row['PRECIO']
                 descuento = row.get('Descuento', 0)
                 
-                # Obtenemos el ID directo de la memoria (ya sabemos que existe)
-                id_prod = mapa_cache_productos[clave_sr]
-                
-                print(f"--- Fila {fila_log}: Procesando '{nombre_prod_log}'...")
-                
-                # Llamamos a tu función de registro
                 if registrar_venta_logica(id_prod, cantidad, precio, descuento, fecha_venta_str):
                     exitos += 1
                 else:
-                    print(f"⚠️ Alerta: registrar_venta_logica devolvió False en fila {fila_log}")
                     fallos += 1
-                    
             except Exception as e:
-                print(f"❌ ERROR Fila {fila_log}: {e}")
+                print(f"⚠️ Error fila {index}: {e}")
                 fallos += 1
         
-        # FIN DEL PROCESO
-        if fallos > 0:
-             return {
-                "exito": True, # Ponemos True parcial para que no bloquee, o False si prefieres ser estricto
-                "mensaje": f"Proceso terminado. Éxitos: {exitos}, Errores de lógica: {fallos}",
-                "filas_procesadas_exitosamente": exitos,
-                "filas_omitidas_por_error_interno": fallos
-            }
-
         return {
-            "exito": True,
-            "mensaje": "Archivo procesado completamente",
-            "filas_procesadas_exitosamente": exitos,
-            "filas_omitidas_por_error_interno": 0
+            "exito": True, 
+            "mensaje": f"Proceso terminado. {exitos} ventas guardadas.",
+            "total_registros": exitos
         }
 
     except Exception as e:
-        return {"exito": False, "error": f"ERROR crítico al leer Excel: {str(e)}"}
+        return {"exito": False, "error": f"Error leyendo Excel: {str(e)}"}
 
 def registrar_compra_logica(id_producto: int, cantidad: float, unidad_id: int):
     try:
